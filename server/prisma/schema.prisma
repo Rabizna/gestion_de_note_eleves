@@ -1,0 +1,164 @@
+// server/prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PROVISEUR
+  PROFESSEUR
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  fullName     String
+  email        String   @unique
+  password     String
+  role         Role
+  profileImage String?
+  createdAt    DateTime @default(now())
+}
+
+model Eleve {
+  id     Int     @id @default(autoincrement()) @map("id_eleve")
+  nom    String? @db.VarChar(100)
+  prenom String? @db.VarChar(100)
+
+  inscrit    Boolean @default(false)
+  redoublant Boolean @default(false)
+  renvoye    Boolean @default(false)
+
+  dateNais DateTime? @map("date_nais") @db.Date
+  lieuNais String?   @map("lieu_nais") @db.VarChar(100)
+  sexe     String?   @db.VarChar(20)
+
+  photo      Bytes?
+  numeroActe String? @map("numero_acte") @db.VarChar(100)
+
+  domicile String? @db.VarChar(255)
+  distance String? @db.VarChar(5)
+
+  nbrSoeur Int? @map("nbr_soeur")
+  nbrFrere Int? @map("nbr_frere")
+
+  nomPere        String? @map("nom_pere") @db.VarChar(100)
+  professionPere String? @map("profession_pere") @db.VarChar(100)
+  telephonePere  String? @map("telephone_pere") @db.VarChar(20)
+
+  nomMere        String? @map("nom_mere") @db.VarChar(100)
+  professionMere String? @map("profession_mere") @db.VarChar(100)
+  telephoneMere  String? @map("telephone_mere") @db.VarChar(20)
+
+  nomTuteur        String? @map("nom_tuteur") @db.VarChar(100)
+  professionTuteur String? @map("profession_tuteur") @db.VarChar(100)
+  telephoneTuteur  String? @map("telephone_tuteur") @db.VarChar(20)
+
+  telephone String? @unique @db.VarChar(20)
+  numero    Int?
+  matricule Int?
+
+  // FK
+  niveauId  Int?     @map("id_niveau")
+  sectionId Int?     @map("id_section")
+  niveau    Niveau?  @relation(fields: [niveauId], references: [id])
+  section   Section? @relation(fields: [sectionId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  // ⇩⇩⇩ Opposé de Absence.eleve
+  absences Absence[]
+
+  @@map("eleve")
+}
+
+model Niveau {
+  id  Int    @id // 1,2,3
+  nom String @map("nom_niveau") @db.VarChar(100)
+
+  eleves Eleve[]
+
+  // ⇩⇩⇩ Opposé de Absence.niveau
+  absences Absence[]
+
+  // ⇩⇩⇩ Opposé de Coefficient.niveau
+  coefficients Coefficient[]
+
+  @@map("niveau")
+}
+
+model Section {
+  id  Int    @id @default(autoincrement()) @map("id_section")
+  nom String @map("nom_section") @db.VarChar(100)
+
+  eleves Eleve[]
+
+  // ⇩⇩⇩ Opposé de Absence.section
+  absences Absence[]
+
+  // ⇩⇩⇩ Opposé de Coefficient.section
+  coefficients Coefficient[]
+
+  @@map("section")
+}
+
+/** Matières (nom_matiere et code_matiere uniques) */
+model Matiere {
+  id   Int    @id @default(autoincrement()) @map("id_matiere")
+  nom  String @unique @map("nom_matiere")  @db.VarChar(150)
+  code String @unique @map("code_matiere") @db.VarChar(10)
+
+  // ⇩⇩⇩ Opposé de Coefficient.matiere
+  coefficients Coefficient[]
+
+  @@map("matiere")
+}
+
+/** Table des coefficients par (matiere, niveau, section) */
+model Coefficient {
+  id          Int     @id @default(autoincrement()) @map("id_coefficient")
+  matiereId   Int     @map("id_matiere")
+  niveauId    Int     @map("id_niveau")
+  sectionId   Int     @map("id_section")
+  coefficient Int
+
+  // relations
+  matiere Matiere @relation(fields: [matiereId], references: [id], onDelete: Cascade)
+  niveau  Niveau  @relation(fields: [niveauId], references: [id], onDelete: Cascade)
+  section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  /// Évite les doublons logiques
+  @@unique([matiereId, niveauId, sectionId], name: "uq_coeff_matiere_niveau_section")
+
+  @@map("coefficient")
+}
+
+/// Demi-journée d’absence
+enum AbsPlage {
+  MATIN
+  APRES_MIDI
+}
+
+/// Table des absences
+model Absence {
+  id        Int      @id @default(autoincrement()) @map("id_Absence")
+  eleveId   Int      @map("id_eleve")
+  date      DateTime @map("date_absence") @db.Date
+  plage     AbsPlage @map("plage")
+  motif     String?  @db.VarChar(255)
+  niveauId  Int?     @map("id_niveau")
+  sectionId Int?     @map("id_section")
+
+  // relations
+  eleve   Eleve    @relation(fields: [eleveId], references: [id], onDelete: Cascade)
+  niveau  Niveau?  @relation(fields: [niveauId], references: [id], onDelete: SetNull)
+  section Section? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+
+  @@unique([eleveId, date, plage], name: "uq_absence_eleve_date_plage")
+  @@index([date], name: "idx_absence_date")
+  @@index([niveauId, sectionId], name: "idx_absence_niv_sec")
+  @@map("absence")
+}
