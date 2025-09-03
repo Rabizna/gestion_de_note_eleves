@@ -1,4 +1,3 @@
-//client/src/pages/contents/Notes.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -39,6 +38,8 @@ export default function Notes() {
         .title { color: rgb(8,57,64); font-size:22px; font-weight:800; padding-bottom:10px;
                  border-bottom:2px solid rgb(243,117,33); }
         .grid-3 { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:24px; margin-top:30px; }
+
+        /* SUB comme Absence + gradient + hover */
         .btnBig {
           color:#fff; border:0; border-radius:12px; padding:22px; font-size:18px; font-weight:700; cursor:pointer;
           background: linear-gradient(135deg, rgba(8,57,64,1) 0%, rgba(15,118,110,1) 100%);
@@ -47,10 +48,12 @@ export default function Notes() {
           box-shadow: 0 10px 22px rgba(2,6,23,.18);
         }
         .btnBig:hover { filter: brightness(1.06); transform: translateY(-1px); box-shadow: 0 14px 28px rgba(2,6,23,.24); }
+
         .back { align-self:flex-start; background:#f1f5f9; border:0; border-radius:10px; padding:8px 12px; font-weight:700; cursor:pointer; }
         .crumbs { display:flex; gap:8px; align-items:center; color:#334155; }
         .crumbs a { color:#0f766e; text-decoration:none; }
 
+        /* Formulaire */
         .formWrap { display:flex; justify-content:space-between; gap:30px; margin-top:24px; }
         .col { flex:1; display:flex; flex-direction:column; gap:14px; }
         .row { display:flex; align-items:center; gap:12px; }

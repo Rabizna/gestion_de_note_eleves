@@ -9,55 +9,6 @@ const norm = (s) =>
     .toLowerCase()
     .trim();
 
-/** "1er trimestre" | "2eme trimestre" | "3eme trimestre" -> enum Prisma */
-function mapTrimestre(txt) {
-  const t = norm(txt);
-  if (t.startsWith("1")) return "TRIM1";
-  if (t.startsWith("2")) return "TRIM2";
-  if (t.startsWith("3")) return "TRIM3";
-  throw new Error("Trimestre invalide");
-}
-
-/** "Note Journalière" | "Note Examen" -> enum Prisma */
-function mapStatut(label) {
-  const t = norm(label);
-  if (t.includes("journali")) return "NOTE_JOURNALIERE";
-  if (t.includes("examen")) return "NOTE_EXAMEN";
-  throw new Error("Type de note invalide");
-}
-
-/** Resolve ids depuis cycle('seconde'|'premiere'|'terminale') + sub('A'|'B'|'C'|'L'|'S'|'OSE') */
-async function resolveIds(cycle, sub) {
-  const [niveaux, sections] = await Promise.all([
-    prisma.niveau.findMany({ select: { id: true, nom: true } }),
-    prisma.section.findMany({ select: { id: true, nom: true } }),
-  ]);
-
-  const c = norm(cycle);
-  // on tolère accents/casse/espaces + "première"/"premiere"
-  const niv =
-    niveaux.find((n) => {
-      const nn = norm(n.nom);
-      return (
-        nn === c ||
-        nn.startsWith(c) ||
-        (c === "premiere" && nn.includes("premier")) ||
-        (c.startsWith("termin") && nn.startsWith("terminal"))
-      );
-    }) || null;
-
-  if (!niv) throw new Error("Niveau inconnu");
-
-  const sUpper = String(sub).toUpperCase().trim();
-  const sec =
-    sections.find((s) => String(s.nom).toUpperCase().trim() === sUpper) || null;
-
-  if (!sec) throw new Error("Section inconnue");
-
-  return { niveauId: niv.id, sectionId: sec.id };
-}
-
-/** Construit une URL publique /uploads/... à partir d'une valeur DB */
 function photoUrl(photo) {
   if (!photo) return "/uploads/defaut.png";
   if (typeof photo !== "string") return "/uploads/defaut.png";
@@ -66,21 +17,67 @@ function photoUrl(photo) {
   return `/uploads/${file}`;
 }
 
+function mapTrimestre(txt) {
+  const t = norm(txt);
+  if (t.startsWith("1")) return "TRIM1";
+  if (t.startsWith("2")) return "TRIM2";
+  if (t.startsWith("3")) return "TRIM3";
+  throw new Error("Trimestre invalide");
+}
+
+function mapStatut(label) {
+  const t = norm(label);
+  if (t.includes("journali")) return "NOTE_JOURNALIERE";
+  if (t.includes("examen")) return "NOTE_EXAMEN";
+  throw new Error("Type de note invalide");
+}
+
+/** Résout les ids via tables, tolérant accents/casse/alias. */
+async function resolveIds(cycle, sub) {
+  const c = norm(cycle);
+  const sUpper = String(sub).toUpperCase().trim();
+
+  const niveaux = await prisma.niveau.findMany({ select: { id: true, nom: true } });
+  const sections = await prisma.section.findMany({ select: { id: true, nom: true } });
+
+  // alias principaux
+  const isPremiere = c === "premiere" || c === "premiere " || c === "premieree" || c === "premieree";
+  const niv =
+    niveaux.find((n) => {
+      const nn = norm(n.nom);
+      return (
+        nn === c ||
+        nn.startsWith(c) ||
+        (isPremiere && nn.includes("premier")) ||
+        (c.startsWith("termin") && nn.startsWith("terminal"))
+      );
+    }) || null;
+
+  if (!niv) throw new Error("Niveau inconnu");
+
+  const sec =
+    sections.find((x) => String(x.nom).toUpperCase().trim() === sUpper) ||
+    sections.find((x) => norm(x.nom) === norm(sub)) ||
+    null;
+
+  if (!sec) throw new Error("Section inconnue");
+
+  return { niveauId: niv.id, sectionId: sec.id };
+}
+
 /* ------------------------ Controllers ------------------------ */
 
-// GET /api/notes/eleves?cycle=seconde&sub=A
-// GET /api/notes/eleves/:cycle/:sub
+/** GET /api/notes/eleves?cycle=seconde&sub=A */
 export async function listEleves(req, res) {
   try {
     const cycle = req.params.cycle ?? req.query.cycle;
     const sub = req.params.sub ?? req.query.sub ?? req.query.section;
-    if (!cycle || !sub) {
-      return res.status(400).json({ message: "cycle et sub requis." });
-    }
+    if (!cycle || !sub) return res.status(400).json({ message: "cycle et sub requis." });
 
     const { niveauId, sectionId } = await resolveIds(cycle, sub);
 
-    const rows = await prisma.eleve.findMany({
+    // 1) filtre strict par (niveauId, sectionId) → séparation nette Seconde A, etc.
+    let rows = await prisma.eleve.findMany({
       where: { niveauId, sectionId },
       orderBy: [{ nom: "asc" }, { prenom: "asc" }],
       select: {
@@ -97,6 +94,32 @@ export async function listEleves(req, res) {
         section: { select: { nom: true } },
       },
     });
+
+    // 2) fallback par nom des relations si résultat vide (tolère données incohérentes)
+    if (!rows.length) {
+      rows = await prisma.eleve.findMany({
+        where: {
+          AND: [
+            { niveau: { nom: { contains: cycle.slice(0, 5), mode: "insensitive" } } },
+            { section: { nom: { equals: sub, mode: "insensitive" } } },
+          ],
+        },
+        orderBy: [{ nom: "asc" }, { prenom: "asc" }],
+        select: {
+          id: true,
+          nom: true,
+          prenom: true,
+          sexe: true,
+          dateNais: true,
+          lieuNais: true,
+          telephone: true,
+          domicile: true,
+          photo: true,
+          niveau: { select: { nom: true } },
+          section: { select: { nom: true } },
+        },
+      });
+    }
 
     const eleves = rows.map((e) => ({
       id: e.id,
@@ -120,18 +143,16 @@ export async function listEleves(req, res) {
   }
 }
 
-// GET /api/notes/matieres?cycle=...&sub=...
+/** GET /api/notes/matieres?cycle=...&sub=... */
 export async function listMatieresForClass(req, res) {
   try {
     const cycle = req.params.cycle ?? req.query.cycle;
     const sub = req.params.sub ?? req.query.sub ?? req.query.section;
-    if (!cycle || !sub) {
-      return res.status(400).json({ message: "cycle et sub requis." });
-    }
+    if (!cycle || !sub) return res.status(400).json({ message: "cycle et sub requis." });
 
     const { niveauId, sectionId } = await resolveIds(cycle, sub);
 
-    const rows = await prisma.coefficient.findMany({
+    let rows = await prisma.coefficient.findMany({
       where: { niveauId, sectionId },
       select: {
         coefficient: true,
@@ -139,6 +160,23 @@ export async function listMatieresForClass(req, res) {
       },
       orderBy: [{ matiere: { nom: "asc" } }],
     });
+
+    // fallback par noms si aucun coef n'est saisi pour ce couple
+    if (!rows.length) {
+      rows = await prisma.coefficient.findMany({
+        where: {
+          AND: [
+            { niveau: { nom: { contains: cycle.slice(0, 5), mode: "insensitive" } } },
+            { section: { nom: { equals: sub, mode: "insensitive" } } },
+          ],
+        },
+        select: {
+          coefficient: true,
+          matiere: { select: { id: true, nom: true, code: true } },
+        },
+        orderBy: [{ matiere: { nom: "asc" } }],
+      });
+    }
 
     const matieres = rows.map((r) => ({
       id: r.matiere.id,
@@ -154,8 +192,7 @@ export async function listMatieresForClass(req, res) {
   }
 }
 
-// POST /api/notes
-// body: { eleveId, matiereId, trimestre, type, note }
+/** POST /api/notes */
 export async function createNote(req, res) {
   try {
     const eleveId = Number(req.body?.eleveId);
@@ -164,16 +201,11 @@ export async function createNote(req, res) {
     const trimestreLabel = String(req.body?.trimestre || "");
     const typeLabel = String(req.body?.type || "");
 
-    if (!eleveId || !matiereId || Number.isNaN(note)) {
-      return res
-        .status(400)
-        .json({ message: "Champs requis: eleveId, matiereId, note." });
-    }
-    if (note < 0 || note > 20) {
-      return res
-        .status(400)
-        .json({ message: "La note doit être comprise entre 0 et 20." });
-    }
+    if (!eleveId || !matiereId || Number.isNaN(note))
+      return res.status(400).json({ message: "Champs requis: eleveId, matiereId, note." });
+
+    if (note < 0 || note > 20)
+      return res.status(400).json({ message: "La note doit être comprise entre 0 et 20." });
 
     const trimestre = mapTrimestre(trimestreLabel);
     const statut = mapStatut(typeLabel);
@@ -192,7 +224,6 @@ export async function createNote(req, res) {
     });
     const coefficient = Number(coefRow?.coefficient || 1);
 
-    // Doublon
     const doublon = await prisma.note.findFirst({
       where: { eleveId, matiereId, trimestre, statut },
       select: { id: true },
