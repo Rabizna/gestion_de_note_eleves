@@ -1,4 +1,3 @@
-// server/src/app.js
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -6,15 +5,14 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 import authRouter from "./routes/auth.routes.js";
-import { refRouter } from "./routes/ref.routes.js";           // si présent
-import studentsRouter from "./routes/students.routes.js";      // si présent
+import { refRouter } from "./routes/ref.routes.js";
+import studentsRouter from "./routes/students.routes.js";
 import inscriptionRouter from "./routes/inscription.routes.js";
-import statsRouter from "./routes/stats.routes.js";            // <<< import
+import statsRouter from "./routes/stats.routes.js";
 import absenceRouter from "./routes/absence.routes.js";
-
 import matiereRoutes from "./routes/matiere.routes.js";
-
 import coefficientsRoutes from "./routes/coefficients.routes.js";
+import noteRoutes from "./routes/note.routes.js";
 
 export const app = express();
 
@@ -29,37 +27,42 @@ app.use(
   })
 );
 
-// (optionnel) petit log pour debug
+// petit log
 app.use((req, _res, next) => { console.log(req.method, req.path); next(); });
 
-// /uploads statique
+// ---------- Static /uploads (IMPORTANT: dossier réel "Uploads") ----------
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-app.use("/uploads", express.static(path.resolve(__dirname, "../uploads")));
 
+// Servez TOUJOURS le dossier "Uploads" sous l'URL en minuscules /uploads
+app.use(
+  "/uploads",
+  express.static(path.join(process.cwd(), "Uploads"), {
+    setHeaders: (res) => {
+      res.setHeader("Cache-Control", "public, max-age=3600");
+    },
+  })
+);
+
+// ---------- Routes API ----------
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
+
 app.use("/api/matieres", matiereRoutes);
-
 app.use("/api/coeff", coefficientsRoutes);
+app.use("/api/coefficients", coefficientsRoutes);
 
-// —— routes ——
-// Auth
 app.use("/api/auth", authRouter);
-
-// Référentiels / élèves (si tu les as)
 if (refRouter) app.use("/api", refRouter);
 if (studentsRouter) app.use("/api", studentsRouter);
 
-// Absence
 app.use("/api/absence", absenceRouter);
-
-// Inscription
 app.use("/api/inscription", inscriptionRouter);
-
-// >>> STATS (monter AVANT le 404)
 app.use("/api/stats", statsRouter);
 
-app.use("/api/coefficients", coefficientsRoutes);
+// Notes (élèves/matières/insert)
+app.use("/api/notes", noteRoutes);
 
-// 404 JSON pour toute route /api/* non gérée (A LA FIN !)
-app.use("/api", (_req, res) => res.status(404).json({ message: "Route API introuvable." }));
+// 404 JSON (à la fin)
+app.use("/api", (_req, res) =>
+  res.status(404).json({ message: "Route API introuvable." })
+);

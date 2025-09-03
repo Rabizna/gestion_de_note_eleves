@@ -72,6 +72,9 @@ model Eleve {
   // ⇩⇩⇩ Opposé de Absence.eleve
   absences Absence[]
 
+  // ⇩⇩⇩ Opposé de Note.eleve   <-- AJOUT
+  notes Note[]
+
   @@map("eleve")
 }
 
@@ -105,24 +108,31 @@ model Section {
   @@map("section")
 }
 
-/** Matières (nom_matiere et code_matiere uniques) */
+/**
+ * Matières (nom_matiere et code_matiere uniques)
+ */
 model Matiere {
   id   Int    @id @default(autoincrement()) @map("id_matiere")
-  nom  String @unique @map("nom_matiere")  @db.VarChar(150)
+  nom  String @unique @map("nom_matiere") @db.VarChar(150)
   code String @unique @map("code_matiere") @db.VarChar(10)
 
   // ⇩⇩⇩ Opposé de Coefficient.matiere
   coefficients Coefficient[]
 
+  // ⇩⇩⇩ Opposé de Note.matiere  <-- AJOUT
+  notes Note[]
+
   @@map("matiere")
 }
 
-/** Table des coefficients par (matiere, niveau, section) */
+/**
+ * Table des coefficients par (matiere, niveau, section)
+ */
 model Coefficient {
-  id          Int     @id @default(autoincrement()) @map("id_coefficient")
-  matiereId   Int     @map("id_matiere")
-  niveauId    Int     @map("id_niveau")
-  sectionId   Int     @map("id_section")
+  id          Int @id @default(autoincrement()) @map("id_coefficient")
+  matiereId   Int @map("id_matiere")
+  niveauId    Int @map("id_niveau")
+  sectionId   Int @map("id_section")
   coefficient Int
 
   // relations
@@ -130,9 +140,7 @@ model Coefficient {
   niveau  Niveau  @relation(fields: [niveauId], references: [id], onDelete: Cascade)
   section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
 
-  /// Évite les doublons logiques
   @@unique([matiereId, niveauId, sectionId], name: "uq_coeff_matiere_niveau_section")
-
   @@map("coefficient")
 }
 
@@ -140,6 +148,45 @@ model Coefficient {
 enum AbsPlage {
   MATIN
   APRES_MIDI
+}
+
+/// --- Enums pour la table note ---
+enum Trimestre {
+  TRIM1 @map("1er trimestre")
+  TRIM2 @map("2eme trimestre")
+  TRIM3 @map("3eme trimestre")
+}
+
+enum NoteStatut {
+  NOTE_JOURNALIERE @map("Note Journalière")
+  NOTE_EXAMEN      @map("Note Examen")
+  NOTE_MOYENNE     @map("Note Moyenne")
+  NOTE_TOTALE      @map("Note Totale")
+}
+
+/// --- Table NOTE ---
+model Note {
+  id        Int       @id @default(autoincrement()) @map("id_note")
+  eleveId   Int       @map("id_eleve")
+  matiereId Int       @map("id_matiere")
+  trimestre Trimestre @map("trimestre")
+
+  note                Float? @map("note")
+  noteTotalJournalier Float? @map("note_total_journalier")
+  noteTotalExamen     Float? @map("note_total_examen")
+  noteMoyenne         Float? @map("note_moyenne")
+  noteTotal           Float? @map("note_total")
+
+  statut NoteStatut? @map("note_statut")
+
+  // relations
+  eleve   Eleve   @relation(fields: [eleveId], references: [id], onDelete: Cascade)
+  matiere Matiere @relation(fields: [matiereId], references: [id], onDelete: Cascade)
+
+  @@unique([eleveId, matiereId, trimestre], name: "uq_note_eleve_matiere_trim")
+  @@index([eleveId], name: "idx_note_eleve")
+  @@index([matiereId], name: "idx_note_matiere")
+  @@map("note")
 }
 
 /// Table des absences
@@ -152,7 +199,6 @@ model Absence {
   niveauId  Int?     @map("id_niveau")
   sectionId Int?     @map("id_section")
 
-  // relations
   eleve   Eleve    @relation(fields: [eleveId], references: [id], onDelete: Cascade)
   niveau  Niveau?  @relation(fields: [niveauId], references: [id], onDelete: SetNull)
   section Section? @relation(fields: [sectionId], references: [id], onDelete: SetNull)

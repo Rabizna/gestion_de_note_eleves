@@ -67,6 +67,11 @@ export default function App() {
         <Route path="absence/:cycle/:sub" element={<Absence />} />
         <Route path="absence/archive/:cycle/:sub" element={<AbsenceArchive />} />
         <Route path="notes" element={<Notes />} />
+
+        <Route path="notes/:cycle" element={<Notes />} />
+        <Route path="notes/:cycle/:sub" element={<Notes />} />
+
+
         <Route path="bulletin" element={<Bulletin />} />
       </Route>
 
