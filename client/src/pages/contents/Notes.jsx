@@ -1,3 +1,4 @@
+// client/src/pages/contents/Notes.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -39,7 +40,6 @@ export default function Notes() {
                  border-bottom:2px solid rgb(243,117,33); }
         .grid-3 { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:24px; margin-top:30px; }
 
-        /* SUB comme Absence + gradient + hover */
         .btnBig {
           color:#fff; border:0; border-radius:12px; padding:22px; font-size:18px; font-weight:700; cursor:pointer;
           background: linear-gradient(135deg, rgba(8,57,64,1) 0%, rgba(15,118,110,1) 100%);
@@ -53,7 +53,6 @@ export default function Notes() {
         .crumbs { display:flex; gap:8px; align-items:center; color:#334155; }
         .crumbs a { color:#0f766e; text-decoration:none; }
 
-        /* Formulaire */
         .formWrap { display:flex; justify-content:space-between; gap:30px; margin-top:24px; }
         .col { flex:1; display:flex; flex-direction:column; gap:14px; }
         .row { display:flex; align-items:center; gap:12px; }
@@ -135,6 +134,14 @@ function NoteForm({ cycle, sub }) {
   const [typeNote, setTypeNote] = useState("");
   const [note, setNote] = useState("");
 
+  const SWAL = (opts) =>
+    Swal.fire({
+      confirmButtonText: "OK",
+      buttonsStyling: false,
+      customClass: { confirmButton: "btn gradSave" },
+      ...opts,
+    });
+
   useEffect(() => {
     (async () => {
       try {
@@ -146,7 +153,7 @@ function NoteForm({ cycle, sub }) {
         setEleves(E?.eleves || []);
         setMatieres(M?.matieres || []);
       } catch (e) {
-        Swal.fire("Erreur", e.message || "Chargement des données impossible.", "error");
+        SWAL({ icon: "error", title: "Erreur", text: e.message || "Chargement des données impossible." });
       }
     })();
     setEleveId(""); setEleve(null);
@@ -164,20 +171,12 @@ function NoteForm({ cycle, sub }) {
     return Number(m?.coefficient || 1);
   }, [matiereId, matieres]);
 
-  const total = useMemo(() => {
-    const n = Number(note);
-    if (Number.isNaN(n) || n < 0 || n > 20) return null;
-    return (n * coef).toFixed(2);
-  }, [note, coef]);
-
-  // normalisation image
   const normPhoto = (p) => {
     if (!p) return DEFAULT_STUDENT;
-    let u = String(p).replace(/\\/g, "/");
-    if (/^https?:\/\//i.test(u)) return u;
-    u = u.replace(/^\/?uploads\//i, "/uploads/");
-    if (!u.startsWith("/uploads/")) u = "/uploads/" + u.replace(/^\//, "");
-    return u;
+    if (typeof p !== "string") return DEFAULT_STUDENT;
+    if (p.startsWith("/uploads/")) return p;
+    if (p.startsWith("uploads/")) return "/" + p;
+    return p; // data:image/... ou http(s)://...
   };
 
   const resetForm = () => {
@@ -188,11 +187,11 @@ function NoteForm({ cycle, sub }) {
 
   const save = async () => {
     const n = Number(note);
-    if (!eleve) return Swal.fire("Erreur", "Veuillez sélectionner un élève.", "error");
-    if (!matiereId) return Swal.fire("Erreur", "Veuillez sélectionner une matière.", "error");
-    if (!typeNote) return Swal.fire("Erreur", "Choisissez le type de note.", "error");
+    if (!eleve)     return SWAL({ icon:"error", title:"Erreur", text:"Veuillez sélectionner un élève." });
+    if (!matiereId) return SWAL({ icon:"error", title:"Erreur", text:"Veuillez sélectionner une matière." });
+    if (!typeNote)  return SWAL({ icon:"error", title:"Erreur", text:"Choisissez le type de note." });
     if (Number.isNaN(n) || n < 0 || n > 20)
-      return Swal.fire("Erreur", "La note doit être comprise entre 0 et 20.", "error");
+      return SWAL({ icon:"error", title:"Erreur", text:"La note doit être comprise entre 0 et 20." });
 
     try {
       await api("/api/notes", {
@@ -205,10 +204,10 @@ function NoteForm({ cycle, sub }) {
           note: n,
         },
       });
-      await Swal.fire("Succès", "💾 Note enregistrée avec succès.", "success");
+      await SWAL({ icon:"success", title:"Succès", text:"💾 Note enregistrée avec succès." });
       resetForm();
     } catch (e) {
-      Swal.fire("Erreur", e.message || "Échec de l'enregistrement.", "error");
+      SWAL({ icon:"error", title:"Erreur", text: e.message || "Échec de l'enregistrement." });
     }
   };
 
@@ -316,8 +315,9 @@ function NoteForm({ cycle, sub }) {
         <div className="right">
           <img
             className="photo"
-            src={eleve?.photoUrl || normPhoto(eleve?.photo) || DEFAULT_STUDENT}
+            src={normPhoto(eleve?.photo ?? eleve?.photoUrl)}
             alt="Photo élève"
+            onError={(e)=>{ e.currentTarget.src = DEFAULT_STUDENT; }}
           />
         </div>
       </div>

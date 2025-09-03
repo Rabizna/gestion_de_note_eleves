@@ -1,4 +1,5 @@
-//server/src/controllers/note.controller.js
+// server/src/controllers/note.controller.js
+import { Buffer } from "node:buffer";
 import { prisma } from "../prisma.js";
 
 /* ------------------------- Utils ------------------------- */
@@ -9,9 +10,20 @@ const norm = (s) =>
     .toLowerCase()
     .trim();
 
-function photoUrl(photo) {
-  if (!photo) return "/uploads/defaut.png";
-  if (typeof photo !== "string") return "/uploads/defaut.png";
+/** Normalise une photo:
+ * - Buffer / binaire  -> data URL base64
+ * - Chaîne (chemin)   -> /uploads/xxx
+ * - Autre / null      -> null
+ */
+function encodePhoto(photo) {
+  if (!photo) return null;
+  if (typeof photo !== "string") {
+    try {
+      return `data:image/jpeg;base64,${Buffer.from(photo).toString("base64")}`;
+    } catch {
+      return null;
+    }
+  }
   let file = photo.replace(/\\/g, "/").trim();
   file = file.replace(/^\/?uploads\//i, "").replace(/^\/?Uploads\//, "");
   return `/uploads/${file}`;
@@ -40,8 +52,7 @@ async function resolveIds(cycle, sub) {
   const niveaux = await prisma.niveau.findMany({ select: { id: true, nom: true } });
   const sections = await prisma.section.findMany({ select: { id: true, nom: true } });
 
-  // alias principaux
-  const isPremiere = c === "premiere" || c === "premiere " || c === "premieree" || c === "premieree";
+  const isPremiere = c === "premiere" || c === "premiere " || c === "premieree";
   const niv =
     niveaux.find((n) => {
       const nn = norm(n.nom);
@@ -76,7 +87,6 @@ export async function listEleves(req, res) {
 
     const { niveauId, sectionId } = await resolveIds(cycle, sub);
 
-    // 1) filtre strict par (niveauId, sectionId) → séparation nette Seconde A, etc.
     let rows = await prisma.eleve.findMany({
       where: { niveauId, sectionId },
       orderBy: [{ nom: "asc" }, { prenom: "asc" }],
@@ -95,12 +105,11 @@ export async function listEleves(req, res) {
       },
     });
 
-    // 2) fallback par nom des relations si résultat vide (tolère données incohérentes)
     if (!rows.length) {
       rows = await prisma.eleve.findMany({
         where: {
           AND: [
-            { niveau: { nom: { contains: cycle.slice(0, 5), mode: "insensitive" } } },
+            { niveau: { nom: { contains: String(cycle).slice(0, 5), mode: "insensitive" } } },
             { section: { nom: { equals: sub, mode: "insensitive" } } },
           ],
         },
@@ -121,20 +130,23 @@ export async function listEleves(req, res) {
       });
     }
 
-    const eleves = rows.map((e) => ({
-      id: e.id,
-      nom: e.nom ?? "",
-      prenom: e.prenom ?? "",
-      sexe: e.sexe ?? "",
-      dateNais: e.dateNais ?? null,
-      lieuNais: e.lieuNais ?? "",
-      telephone: e.telephone ?? "",
-      domicile: e.domicile ?? "",
-      niveau: e.niveau ? { nom: e.niveau.nom } : null,
-      section: e.section ? { nom: e.section.nom } : null,
-      photo: e.photo ?? null,
-      photoUrl: photoUrl(e.photo),
-    }));
+    const eleves = rows.map((e) => {
+      const encoded = encodePhoto(e.photo);
+      return {
+        id: e.id,
+        nom: e.nom ?? "",
+        prenom: e.prenom ?? "",
+        sexe: e.sexe ?? "",
+        dateNais: e.dateNais ?? null,
+        lieuNais: e.lieuNais ?? "",
+        telephone: e.telephone ?? "",
+        domicile: e.domicile ?? "",
+        niveau: e.niveau ? { nom: e.niveau.nom } : null,
+        section: e.section ? { nom: e.section.nom } : null,
+        photo: encoded,
+        photoUrl: encoded,
+      };
+    });
 
     return res.json({ eleves });
   } catch (e) {
@@ -166,7 +178,7 @@ export async function listMatieresForClass(req, res) {
       rows = await prisma.coefficient.findMany({
         where: {
           AND: [
-            { niveau: { nom: { contains: cycle.slice(0, 5), mode: "insensitive" } } },
+            { niveau: { nom: { contains: String(cycle).slice(0, 5), mode: "insensitive" } } },
             { section: { nom: { equals: sub, mode: "insensitive" } } },
           ],
         },
@@ -208,8 +220,9 @@ export async function createNote(req, res) {
       return res.status(400).json({ message: "La note doit être comprise entre 0 et 20." });
 
     const trimestre = mapTrimestre(trimestreLabel);
-    const statut = mapStatut(typeLabel);
+    const statut = mapStatut(typeLabel); // NOTE_JOURNALIERE | NOTE_EXAMEN
 
+    // Élève + sa classe
     const eleve = await prisma.eleve.findUnique({
       where: { id: eleveId },
       select: { id: true, niveauId: true, sectionId: true, nom: true, prenom: true, photo: true },
@@ -218,12 +231,14 @@ export async function createNote(req, res) {
     if (!eleve.niveauId || !eleve.sectionId)
       return res.status(400).json({ message: "Élève sans niveau/section." });
 
+    // Coeff
     const coefRow = await prisma.coefficient.findFirst({
       where: { matiereId, niveauId: eleve.niveauId, sectionId: eleve.sectionId },
       select: { coefficient: true },
     });
     const coefficient = Number(coefRow?.coefficient || 1);
 
+    // Doublon exact (même élève, matière, trimestre, statut)
     const doublon = await prisma.note.findFirst({
       where: { eleveId, matiereId, trimestre, statut },
       select: { id: true },
@@ -235,17 +250,19 @@ export async function createNote(req, res) {
       });
     }
 
+    // Payload: on ne renseigne QUE la colonne calculée correspondant au statut
     const data = {
       eleveId,
       matiereId,
       trimestre,
+      statut, // ⚠ désormais NOT NULL dans le schéma
       note,
-      statut,
       noteTotalJournalier: null,
       noteTotalExamen: null,
       noteMoyenne: null,
       noteTotal: null,
     };
+
     if (statut === "NOTE_JOURNALIERE") data.noteTotalJournalier = note * coefficient;
     if (statut === "NOTE_EXAMEN")      data.noteTotalExamen    = note * coefficient;
 
@@ -255,9 +272,21 @@ export async function createNote(req, res) {
       ok: true,
       id: created.id,
       coefficient,
-      eleve: { id: eleve.id, nom: eleve.nom, prenom: eleve.prenom, photoUrl: photoUrl(eleve.photo) },
+      eleve: {
+        id: eleve.id,
+        nom: eleve.nom,
+        prenom: eleve.prenom,
+        photoUrl: encodePhoto(eleve.photo),
+      },
     });
   } catch (e) {
+    // Gestion douce des erreurs Prisma: unicité etc.
+    if (e && e.code === "P2002") {
+      return res.status(409).json({
+        message:
+          "Une note du même type existe déjà pour cet élève dans cette matière et ce trimestre.",
+      });
+    }
     console.error("createNote error:", e);
     return res.status(500).json({ message: "Erreur: création de note." });
   }

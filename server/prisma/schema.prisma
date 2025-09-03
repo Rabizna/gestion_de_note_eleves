@@ -61,7 +61,6 @@ model Eleve {
   numero    Int?
   matricule Int?
 
-  // FK
   niveauId  Int?     @map("id_niveau")
   sectionId Int?     @map("id_section")
   niveau    Niveau?  @relation(fields: [niveauId], references: [id])
@@ -69,25 +68,18 @@ model Eleve {
 
   createdAt DateTime @default(now())
 
-  // ⇩⇩⇩ Opposé de Absence.eleve
   absences Absence[]
-
-  // ⇩⇩⇩ Opposé de Note.eleve   <-- AJOUT
-  notes Note[]
+  notes    Note[]
 
   @@map("eleve")
 }
 
 model Niveau {
-  id  Int    @id // 1,2,3
+  id  Int    @id
   nom String @map("nom_niveau") @db.VarChar(100)
 
-  eleves Eleve[]
-
-  // ⇩⇩⇩ Opposé de Absence.niveau
-  absences Absence[]
-
-  // ⇩⇩⇩ Opposé de Coefficient.niveau
+  eleves       Eleve[]
+  absences     Absence[]
   coefficients Coefficient[]
 
   @@map("niveau")
@@ -97,12 +89,8 @@ model Section {
   id  Int    @id @default(autoincrement()) @map("id_section")
   nom String @map("nom_section") @db.VarChar(100)
 
-  eleves Eleve[]
-
-  // ⇩⇩⇩ Opposé de Absence.section
-  absences Absence[]
-
-  // ⇩⇩⇩ Opposé de Coefficient.section
+  eleves       Eleve[]
+  absences     Absence[]
   coefficients Coefficient[]
 
   @@map("section")
@@ -116,11 +104,8 @@ model Matiere {
   nom  String @unique @map("nom_matiere") @db.VarChar(150)
   code String @unique @map("code_matiere") @db.VarChar(10)
 
-  // ⇩⇩⇩ Opposé de Coefficient.matiere
   coefficients Coefficient[]
-
-  // ⇩⇩⇩ Opposé de Note.matiere  <-- AJOUT
-  notes Note[]
+  notes        Note[]
 
   @@map("matiere")
 }
@@ -135,7 +120,6 @@ model Coefficient {
   sectionId   Int @map("id_section")
   coefficient Int
 
-  // relations
   matiere Matiere @relation(fields: [matiereId], references: [id], onDelete: Cascade)
   niveau  Niveau  @relation(fields: [niveauId], references: [id], onDelete: Cascade)
   section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
@@ -144,7 +128,6 @@ model Coefficient {
   @@map("coefficient")
 }
 
-/// Demi-journée d’absence
 enum AbsPlage {
   MATIN
   APRES_MIDI
@@ -166,10 +149,10 @@ enum NoteStatut {
 
 /// --- Table NOTE ---
 model Note {
-  id        Int       @id @default(autoincrement()) @map("id_note")
-  eleveId   Int       @map("id_eleve")
-  matiereId Int       @map("id_matiere")
-  trimestre Trimestre @map("trimestre")
+  id        Int        @id @default(autoincrement()) @map("id_note")
+  eleveId   Int        @map("id_eleve")
+  matiereId Int        @map("id_matiere")
+  trimestre Trimestre  @map("trimestre")
 
   note                Float? @map("note")
   noteTotalJournalier Float? @map("note_total_journalier")
@@ -177,13 +160,15 @@ model Note {
   noteMoyenne         Float? @map("note_moyenne")
   noteTotal           Float? @map("note_total")
 
-  statut NoteStatut? @map("note_statut")
+  // ⚠ statut devient obligatoire
+  statut NoteStatut   @map("note_statut")
 
-  // relations
   eleve   Eleve   @relation(fields: [eleveId], references: [id], onDelete: Cascade)
   matiere Matiere @relation(fields: [matiereId], references: [id], onDelete: Cascade)
 
-  @@unique([eleveId, matiereId, trimestre], name: "uq_note_eleve_matiere_trim")
+  // ⚠ Unicité corrigée pour autoriser 2 lignes (journalière + examen)
+  @@unique([eleveId, matiereId, trimestre, statut], name: "uq_note_eleve_matiere_trim_statut")
+
   @@index([eleveId], name: "idx_note_eleve")
   @@index([matiereId], name: "idx_note_matiere")
   @@map("note")
