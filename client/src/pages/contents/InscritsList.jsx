@@ -16,7 +16,8 @@ export default function InscritsList() {
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  // ↓↓↓ Par défaut: 10 (au lieu de 20). Logique inchangée.
+  const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(true);
 
   // ligne "ouverte" (où l’on a cliqué sur l’👁️)
@@ -61,32 +62,114 @@ export default function InscritsList() {
   return (
     <>
       <style>{`
-        .wrap{ display:flex; flex-direction:column; gap:14px; }
-        .title{ color:rgb(8,57,64); font-size:22px; font-weight:800; padding-bottom:10px; border-bottom:2px solid rgb(243,117,33); }
-        .filters{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-        .sel, .input{ padding:8px 10px; border:1px solid #e5e7eb; border-radius:8px; }
-        .btn{ padding:10px 14px; border:0; border-radius:10px; font-weight:700; cursor:pointer; color:#fff; background:rgb(8,57,64); }
-        .btn-muted{ background:#64748b; }
-        .btn-small{ padding:6px 10px; border-radius:8px; font-weight:700; }
-        .table{ width:100%; border-collapse:collapse; }
-        th, td{ border:1px solid #e5e7eb; padding:10px; vertical-align:top; }
-        th{ background:rgb(8,57,64); color:#fff; }
-        tr:nth-child(even){ background:#f8fafc; }
+        :root{
+          --ink:#0f172a; --muted:#475569; --line:#e5e7eb; --ring:#93c5fd;
+        }
 
+        /* === Arrière-plan gradient de la page (scopé) === */
+        .wrap{
+          min-height:100vh;
+          padding:28px 18px;
+          background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 50%, #f97316 100%);
+          display:flex; flex-direction:column; gap:16px; align-items:center;
+        }
+
+        /* === Titre sur le gradient === */
+        .title{
+          color:#ffffff; font-size: clamp(20px, 2.2vw, 30px); font-weight:900;
+          padding-bottom:6px; letter-spacing:.25px; text-align:center;
+          text-shadow:0 2px 10px rgba(0,0,0,.25);
+          border-bottom:none;
+        }
+
+        /* === Bande filtres (glass) === */
+        .filters{
+          width:100%; max-width:1200px;
+          display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+          background: rgba(255,255,255,0.9);
+          backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+          border: 1px solid rgba(255,255,255,0.7);
+          border-radius: 16px;
+          padding: 12px;
+          box-shadow: 0 8px 24px rgba(2,6,23,.14);
+        }
+
+        /* === Sélecteurs / input === */
+        .sel, .input{
+          padding:10px 12px; border:1px solid var(--line); border-radius:12px;
+          background:#ffffff; color:var(--ink); font-size:14px;
+          transition:border-color .15s, box-shadow .15s, transform .05s ease;
+          outline:none;
+        }
+        .sel:focus, .input:focus{
+          border-color:var(--ring);
+          box-shadow:0 0 0 4px rgba(147,197,253,.35);
+        }
+
+        /* === Boutons (gradients) === */
+        .btn{
+          padding:10px 14px; border:0; border-radius:12px; font-weight:900; cursor:pointer; color:#fff;
+          background: linear-gradient(135deg, #0ea5e9, #6366f1);
+          box-shadow:0 8px 22px rgba(15,23,42,.15);
+          transition: transform .08s ease, filter .12s ease, box-shadow .2s ease, opacity .15s ease;
+        }
+        .btn:hover{ transform: translateY(-1px); filter: brightness(1.03); box-shadow:0 12px 26px rgba(15,23,42,.22); }
+        .btn:active{ transform: translateY(0); }
+        .btn-muted{
+          background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+          color:#0f172a;
+        }
+        .btn-small{ padding:8px 10px; border-radius:10px; font-weight:800; }
+
+        /* === Panel tableau (glass) === */
+        .panel{
+          width:100%; max-width:1200px;
+          background: rgba(255,255,255,0.9);
+          backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+          border: 1px solid rgba(255,255,255,0.7);
+          border-radius: 18px;
+          padding: 14px;
+          box-shadow: 0 12px 30px rgba(2,6,23,.16);
+        }
+
+        /* === Tableau moderne === */
+        .table{ width:100%; border-collapse:separate; border-spacing:0; background:#fff; border-radius:12px; overflow:hidden; }
+        th, td{ border-bottom:1px solid var(--line); padding:12px 10px; vertical-align:top; }
+        th{
+          position: sticky; top: 0; z-index: 1;
+          background: linear-gradient(135deg,#0f172a,#1f2937);
+          color:#fff; text-align:left; font-weight:900; letter-spacing:.25px; font-size:13px;
+        }
+        tbody tr:nth-child(even) td{ background:#fafafa; }
+        tbody tr:hover td{ background:#eef2ff; }
+
+        /* === Lignes / avatar / œil === */
         .row{ display:flex; gap:8px; align-items:center; }
-        .avatar{ width:36px; height:36px; border-radius:50%; object-fit:cover; border:2px solid rgb(8,57,64); }
+        .avatar{ width:36px; height:36px; border-radius:50%; object-fit:cover; border:2px solid #0ea5e9; }
 
         .cell-el{ display:flex; align-items:center; justify-content:space-between; width:100%; gap:10px; }
         .cell-el-left{ display:flex; align-items:center; gap:8px; min-width:0; }
         .eye-btn{
           border:0; background:transparent; cursor:pointer;
-          font-size:18px; line-height:1; padding:4px 6px; border-radius:8px;
-          transition: transform .08s ease, background .15s ease;
-          margin-right:0; /* demandé */
+          font-size:18px; line-height:1; padding:4px 6px; border-radius:10px;
+          transition: transform .08s ease, background .15s ease, opacity .12s ease;
+          margin-right:0;
         }
         .eye-btn:hover{ background:#e2e8f0; transform: translateY(-1px); }
+
         .inline-actions{ margin-top:6px; display:flex; justify-content:flex-end; }
-        .foot{ display:flex; justify-content:space-between; align-items:center; }
+
+        /* === Footer (pagination) === */
+        .foot{
+          width:100%; max-width:1200px;
+          display:flex; justify-content:space-between; align-items:center;
+          background: rgba(255,255,255,0.9);
+          backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+          border: 1px solid rgba(255,255,255,0.7);
+          border-radius: 16px;
+          padding: 10px 12px;
+          box-shadow: 0 8px 22px rgba(2,6,23,.12);
+        }
       `}</style>
 
       <div className="wrap">
@@ -100,7 +183,7 @@ export default function InscritsList() {
             {refs.niveaux.map(n => <option key={n.id} value={n.id}>{n.nom}</option>)}
           </select>
 
-          <select className="sel" value={sectionId} onChange={e=>setSectionId(e.target.value)}>
+            <select className="sel" value={sectionId} onChange={e=>setSectionId(e.target.value)}>
             <option value="">Toutes sections</option>
             {refs.sections.map(s => <option key={s.id} value={s.id}>{s.nom}</option>)}
           </select>
@@ -108,7 +191,7 @@ export default function InscritsList() {
           <input className="input" placeholder="Recherche nom/prénom…" value={q} onChange={e=>setQ(e.target.value)} />
           <button className="btn" onClick={() => load(1)}>Rechercher</button>
 
-          <span style={{marginLeft:"auto", color:"#475569"}}>Total: <b>{total}</b></span>
+          <span style={{marginLeft:"auto", color:"#f1f5f9"}}>Total: <b>{total}</b></span>
         </div>
 
         <div className="panel">
@@ -190,7 +273,9 @@ export default function InscritsList() {
             >
               ← Précédent
             </button>
-            <span style={{padding:"0 10px"}}>Page {page} / {Math.max(1, Math.ceil(total / pageSize))}</span>
+            <span style={{padding:"0 10px", color:"#0f172a", fontWeight:800}}>
+              Page {page} / {Math.max(1, Math.ceil(total / pageSize))}
+            </span>
             <button
               className="btn btn-muted"
               onClick={()=>{

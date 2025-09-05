@@ -133,63 +133,125 @@ export default function EnregistrerEleve() {
   return (
     <>
       <style>{`
-        :root{ --label-w: 140px; }
+        /* ===== Palette (on respecte tes couleurs et on ajoute des gradients) ===== */
+        :root{
+          --brand: rgb(8,57,64);         /* vert foncé */
+          --accent: rgb(243,117,33);     /* orange */
+          --paper: #ffffff;
+          --paper-2: #f8fbff;
+          --line: #e5e7eb;
+          --danger: #dc2626;
+          --primary: #2563eb;
+          --ok: #16a34a;
+        }
 
+        /* ===== Titre avec touche moderne ===== */
         .form-title{
-          font-size:1.4em; font-weight:700; color:rgb(8,57,64);
-          margin-bottom:12px; padding-bottom:10px; border-bottom:2px solid rgb(243,117,33);
+          font-size:1.4em; font-weight:800; color:var(--brand);
+          margin-bottom:14px; padding-bottom:12px; position:relative;
+          background: linear-gradient(90deg, rgba(8,57,64,.08), rgba(243,117,33,.08));
+          -webkit-background-clip: text; background-clip: text;
+        }
+        .form-title::after{
+          content:""; position:absolute; left:0; bottom:0; height:3px; width:140px;
+          background: linear-gradient(90deg, var(--accent), rgba(243,117,33,.4));
+          border-radius:999px;
+        }
+
+        /* ===== Carte formulaire avec bg gradient ===== */
+        .class-form{
+          background:
+            linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%),
+            radial-gradient(120% 120% at 100% 0%, rgba(243,117,33,.08) 0%, rgba(243,117,33,0) 60%);
+          background-blend-mode: normal, overlay;
+          border:1px solid var(--line);
+          border-radius:16px;
+          padding:16px;
+          box-shadow: 0 12px 36px rgba(2,6,23,.08);
         }
 
         /* 2 colonnes: gauche (champs) / droite (photo) */
         .top-grid{
           display:grid;
-          grid-template-columns: 1fr 200px; /* la gauche s'étire jusqu'à la photo */
+          grid-template-columns: 1fr 200px;
           column-gap:16px; align-items:start;
         }
         .left-col{ min-width:0; }
 
         /* ligne simple (label à gauche, input à droite) */
         .row{ display:flex; align-items:center; gap:10px; margin-top:10px; }
-        .row .label-inline{ width:var(--label-w); font-weight:600; }
-        .row .control{ flex:1; min-width:0; } /* plus de max-width → les 3 champs touchent la photo */
+        .row .label-inline{ width:140px; font-weight:700; color:#0f172a; }
+        .row .control{ flex:1; min-width:0; }
 
         /* grilles 3 colonnes alignées */
         .grid3{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px; align-items:start; }
         .cell{ display:block; }
-        .cell .label-inline{ display:inline-block; width:var(--label-w); font-weight:600; vertical-align:middle; }
-        .cell .control{ display:inline-block; width:calc(100% - var(--label-w)); vertical-align:middle; }
+        .cell .label-inline{ display:inline-block; width:140px; font-weight:700; color:#0f172a; vertical-align:middle; }
+        .cell .control{ display:inline-block; width:calc(100% - 140px); vertical-align:middle; }
 
-        .input {
-          width:400px; padding:10px 12px; border:1px solid #ddd; border-radius:6px; font-size:14px;
-          transition:border-color .15s, box-shadow .15s;
+        /* ===== Champs ===== */
+        .input, .select {
+          width:400px; max-width:100%;
+          padding:10px 12px; border:1px solid #dbe2ea; border-radius:10px; font-size:14px;
+          background: linear-gradient(180deg, #fff, #f9fbfd);
+          transition:border-color .15s, box-shadow .15s, transform .04s ease;
+          outline:none;
         }
-        .select{
-          width: 100%; padding:10px 12px; border:1px solid #ddd; border-radius:6px; font-size:14px;
-          transition:border-color .15s, box-shadow .15s;
+        .select{ width:100%; }
+        .input:focus, .select:focus{
+          border-color: var(--accent);
+          box-shadow: 0 0 0 3px rgba(243,117,33,.25);
         }
+        .input:hover, .select:hover{ transform: translateY(-0.5px); }
+        .invalid{ border-color:var(--danger) !important; box-shadow:0 0 0 3px rgba(220,38,38,.18); }
+        .error{ color:var(--danger); font-size:12px; margin-top:4px; margin-left:140px; min-height:16px; }
 
-        .input:focus, .select:focus{ border-color:rgb(243,117,33); outline:none; box-shadow:0 0 0 2px rgba(243,117,33,.15); }
-        .invalid{ border-color:#dc2626 !important; box-shadow:0 0 0 2px rgba(220,38,38,.12); }
-        .error{ color:#dc2626; font-size:12px; margin-top:4px; margin-left:var(--label-w); min-height:16px; }
-
-        /* photo fixe */
+        /* ===== Photo ===== */
         .photo-col{ width:200px; }
         .photo-wrap{
-          width:160px; height:180px; border:1px solid #ddd; border-radius:8px; overflow:hidden;
-          background:#f8fafc; display:flex; align-items:center; justify-content:center;
+          width:160px; height:180px; border:1px solid var(--line); border-radius:12px; overflow:hidden;
+          background:
+            linear-gradient(180deg,#f8fafc,#eef4ff),
+            radial-gradient(120% 80% at 0% 0%, rgba(8,57,64,.08) 0%, rgba(8,57,64,0) 60%);
+          display:flex; align-items:center; justify-content:center;
+          box-shadow: 0 10px 26px rgba(2,6,23,.08);
         }
         .photo-wrap img{ width:100%; height:100%; object-fit:cover; }
         .uploader{ width:160px; margin-top:8px; }
         .file-name{
-          width:160px; font-size:12px; color:#444; margin-top:6px;
+          width:160px; font-size:12px; color:#475569; margin-top:6px;
           white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
         }
 
+        /* ===== Boutons (gradients + hover sans déformer la mise en page) ===== */
         .button-container{ display:flex; gap:12px; justify-content:center; margin-top:14px; }
-        .btn{ padding:10px 16px; font-weight:600; border:0; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; }
-        .btn-valide{ background:green; color:#fff; } .btn-primary{ background:#2563eb; color:#fff; } .btn-danger{ background:#dc2626; color:#fff; }
-        .btn:disabled{ opacity:.7; cursor:not-allowed; }
+        .btn{
+          padding:10px 16px; font-weight:800; border:0; border-radius:12px; cursor:pointer;
+          display:inline-flex; align-items:center; gap:8px; color:#fff;
+          box-shadow:0 10px 24px rgba(2,6,23,.10);
+          transition: transform .06s ease, filter .15s ease, box-shadow .18s ease;
+          will-change: transform;
+        }
+        .btn:active{ transform: translateY(1px); }
 
+        .btn-valide{
+          background: linear-gradient(135deg, #22c55e, #16a34a); /* vert OK */
+        }
+        .btn-primary{
+          background: linear-gradient(135deg, var(--primary), #1d4ed8); /* bleu */
+        }
+        .btn-danger{
+          background: linear-gradient(135deg, #ef4444, #dc2626); /* rouge */
+        }
+
+        .btn:hover{
+          filter: brightness(1.04);
+          transform: translateY(-1px);
+          box-shadow:0 14px 28px rgba(2,6,23,.16);
+        }
+        .btn:disabled{ opacity:.7; cursor:not-allowed; transform:none; box-shadow:0 10px 24px rgba(2,6,23,.10); }
+
+        /* Petites corrections responsives */
         @media (max-width:980px){
           .top-grid{ grid-template-columns: 1fr; }
           .photo-col{ width:100%; }
@@ -199,7 +261,7 @@ export default function EnregistrerEleve() {
         }
       `}</style>
 
-      <div className="form-title">Ajouter une nouvelle élève</div>
+      <div className="form-title">🧑‍🎓 Ajouter une nouvelle élève</div>
 
       <form className="class-form" onSubmit={onSubmit} onReset={onReset} noValidate>
         <div className="top-grid">
@@ -406,113 +468,159 @@ export default function EnregistrerEleve() {
               </div>
             </div>
 
-            {/* Père : label seulement sur "Nom", le reste en placeholder */}
-            <div className="grid3" style={{ marginTop: 10 }}>
-              <div className="cell">
-                <span className="label-inline">Nom du père:</span>
-                <span className="control">
-                  <input className={`input ${errors.pereNom ? "invalid" : ""}`}
-                         style={{ width: "200px" }}
-                         value={form.pereNom} onChange={onChange("pereNom")}
-                         onBlur={(e) => setField("pereNom", e.target.value)} />
-                </span>
-                <div className="error">{errors.pereNom || ""}</div>
-              </div>
-              <div className="cell">
-                <span className="label-inline" style={{ visibility:"hidden" }}>Profession du père</span>
-                <span className="control">
-                  <input className={`input ${errors.pereProfession ? "invalid" : ""}`}
-                         placeholder="Profession du père"
-                         style={{ width: "200px" }}
-                         value={form.pereProfession} onChange={onChange("pereProfession")}
-                         onBlur={(e) => setField("pereProfession", e.target.value)} />
-                </span>
-                <div className="error">{errors.pereProfession || ""}</div>
-              </div>
-              <div className="cell">
-                <span className="label-inline" style={{ visibility:"hidden" }}>Téléphone du père</span>
-                <span className="control">
-                  <input className={`input ${errors.pereTel ? "invalid" : ""}`}
-                         placeholder="Téléphone du père"
-                         style={{ width: "200px" }}
-                         value={form.pereTel} onChange={onChange("pereTel")}
-                         onBlur={(e) => setField("pereTel", e.target.value)} />
-                </span>
-                <div className="error">{errors.pereTel || ""}</div>
-              </div>
-            </div>
+            {/* Père */}
+<div className="grid3" style={{ marginTop: 10 }}>
+  <div className="cell">
+    <span className="label-inline">Nom du père:</span>
+    <span className="control">
+      <input
+        className={`input ${errors.pereNom ? "invalid" : ""}`}
+        style={{ width: "200px", maxWidth: "none" }}
+        value={form.pereNom}
+        onChange={onChange("pereNom")}
+        onBlur={(e) => setField("pereNom", e.target.value)}
+      />
+    </span>
+    <div className="error">{errors.pereNom || ""}</div>
+  </div>
 
-            {/* Mère : label seulement sur "Nom" */}
-            <div className="grid3" style={{ marginTop: 10 }}>
-              <div className="cell">
-                <span className="label-inline">Nom de la mère:</span>
-                <span className="control">
-                  <input className={`input ${errors.mereNom ? "invalid" : ""}`}
-                         style={{ width: "200px" }}
-                         value={form.mereNom} onChange={onChange("mereNom")}
-                         onBlur={(e) => setField("mereNom", e.target.value)} />
-                </span>
-                <div className="error">{errors.mereNom || ""}</div>
-              </div>
-              <div className="cell">
-                <span className="label-inline" style={{ visibility:"hidden" }}>Profession de la mère</span>
-                <span className="control">
-                  <input className={`input ${errors.mereProfession ? "invalid" : ""}`}
-                         placeholder="Profession de la mère"
-                         style={{ width: "200px" }}
-                         value={form.mereProfession} onChange={onChange("mereProfession")}
-                         onBlur={(e) => setField("mereProfession", e.target.value)} />
-                </span>
-                <div className="error">{errors.mereProfession || ""}</div>
-              </div>
-              <div className="cell">
-                <span className="label-inline" style={{ visibility:"hidden" }}>Téléphone de la mère</span>
-                <span className="control">
-                  <input className={`input ${errors.mereTel ? "invalid" : ""}`}
-                         placeholder="Téléphone de la mère"
-                         style={{ width: "200px" }}
-                         value={form.mereTel} onChange={onChange("mereTel")}
-                         onBlur={(e) => setField("mereTel", e.target.value)} />
-                </span>
-                <div className="error">{errors.mereTel || ""}</div>
-              </div>
-            </div>
+  <div className="cell">
+    <span className="label-inline" style={{ visibility: "hidden" }}>
+      Profession du père
+    </span>
+    <span className="control">
+      <input
+        className={`input ${errors.pereProfession ? "invalid" : ""}`}
+        placeholder="Profession du père"
+        style={{ width: "200px", maxWidth: "none" }}
+        value={form.pereProfession}
+        onChange={onChange("pereProfession")}
+        onBlur={(e) => setField("pereProfession", e.target.value)}
+      />
+    </span>
+    <div className="error">{errors.pereProfession || ""}</div>
+  </div>
 
-            {/* Tuteur : label seulement sur "Nom" */}
-            <div className="grid3" style={{ marginTop: 10 }}>
-              <div className="cell">
-                <span className="label-inline">Nom du tuteur:</span>
-                <span className="control">
-                  <input className={`input ${errors.tuteurNom ? "invalid" : ""}`}
-                         style={{ width: "200px" }}
-                         value={form.tuteurNom} onChange={onChange("tuteurNom")}
-                         onBlur={(e) => setField("tuteurNom", e.target.value)} />
-                </span>
-                <div className="error">{errors.tuteurNom || ""}</div>
-              </div>
-              <div className="cell">
-                <span className="label-inline" style={{ visibility:"hidden" }}>Profession du tuteur</span>
-                <span className="control">
-                  <input className={`input ${errors.tuteurProfession ? "invalid" : ""}`}
-                         placeholder="Profession du tuteur"
-                         style={{ width: "200px" }}
-                         value={form.tuteurProfession} onChange={onChange("tuteurProfession")}
-                         onBlur={(e) => setField("tuteurProfession", e.target.value)} />
-                </span>
-                <div className="error">{errors.tuteurProfession || ""}</div>
-              </div>
-              <div className="cell">
-                <span className="label-inline" style={{ visibility:"hidden" }}>Téléphone du tuteur</span>
-                <span className="control">
-                  <input className={`input ${errors.tuteurTel ? "invalid" : ""}`}
-                         placeholder="Téléphone du tuteur"
-                         style={{ width: "200px" }}
-                         value={form.tuteurTel} onChange={onChange("tuteurTel")}
-                         onBlur={(e) => setField("tuteurTel", e.target.value)} />
-                </span>
-                <div className="error">{errors.tuteurTel || ""}</div>
-              </div>
-            </div>
+  <div className="cell">
+    <span className="label-inline" style={{ visibility: "hidden" }}>
+      Téléphone du père
+    </span>
+    <span className="control">
+      <input
+        className={`input ${errors.pereTel ? "invalid" : ""}`}
+        placeholder="Téléphone du père"
+        style={{ width: "200px", maxWidth: "none" }}
+        value={form.pereTel}
+        onChange={onChange("pereTel")}
+        onBlur={(e) => setField("pereTel", e.target.value)}
+      />
+    </span>
+    <div className="error">{errors.pereTel || ""}</div>
+  </div>
+</div>
+
+{/* Mère */}
+<div className="grid3" style={{ marginTop: 10 }}>
+  <div className="cell">
+    <span className="label-inline">Nom de la mère:</span>
+    <span className="control">
+      <input
+        className={`input ${errors.mereNom ? "invalid" : ""}`}
+        style={{ width: "200px", maxWidth: "none" }}
+        value={form.mereNom}
+        onChange={onChange("mereNom")}
+        onBlur={(e) => setField("mereNom", e.target.value)}
+      />
+    </span>
+    <div className="error">{errors.mereNom || ""}</div>
+  </div>
+
+  <div className="cell">
+    <span className="label-inline" style={{ visibility: "hidden" }}>
+      Profession de la mère
+    </span>
+    <span className="control">
+      <input
+        className={`input ${errors.mereProfession ? "invalid" : ""}`}
+        placeholder="Profession de la mère"
+        style={{ width: "200px", maxWidth: "none" }}
+        value={form.mereProfession}
+        onChange={onChange("mereProfession")}
+        onBlur={(e) => setField("mereProfession", e.target.value)}
+      />
+    </span>
+    <div className="error">{errors.mereProfession || ""}</div>
+  </div>
+
+  <div className="cell">
+    <span className="label-inline" style={{ visibility: "hidden" }}>
+      Téléphone de la mère
+    </span>
+    <span className="control">
+      <input
+        className={`input ${errors.mereTel ? "invalid" : ""}`}
+        placeholder="Téléphone de la mère"
+        style={{ width: "200px", maxWidth: "none" }}
+        value={form.mereTel}
+        onChange={onChange("mereTel")}
+        onBlur={(e) => setField("mereTel", e.target.value)}
+      />
+    </span>
+    <div className="error">{errors.mereTel || ""}</div>
+  </div>
+</div>
+
+{/* Tuteur */}
+<div className="grid3" style={{ marginTop: 10 }}>
+  <div className="cell">
+    <span className="label-inline">Nom du tuteur:</span>
+    <span className="control">
+      <input
+        className={`input ${errors.tuteurNom ? "invalid" : ""}`}
+        style={{ width: "200px", maxWidth: "none" }}
+        value={form.tuteurNom}
+        onChange={onChange("tuteurNom")}
+        onBlur={(e) => setField("tuteurNom", e.target.value)}
+      />
+    </span>
+    <div className="error">{errors.tuteurNom || ""}</div>
+  </div>
+
+  <div className="cell">
+    <span className="label-inline" style={{ visibility: "hidden" }}>
+      Profession du tuteur
+    </span>
+    <span className="control">
+      <input
+        className={`input ${errors.tuteurProfession ? "invalid" : ""}`}
+        placeholder="Profession du tuteur"
+        style={{ width: "200px", maxWidth: "none" }}
+        value={form.tuteurProfession}
+        onChange={onChange("tuteurProfession")}
+        onBlur={(e) => setField("tuteurProfession", e.target.value)}
+      />
+    </span>
+    <div className="error">{errors.tuteurProfession || ""}</div>
+  </div>
+
+  <div className="cell">
+    <span className="label-inline" style={{ visibility: "hidden" }}>
+      Téléphone du tuteur
+    </span>
+    <span className="control">
+      <input
+        className={`input ${errors.tuteurTel ? "invalid" : ""}`}
+        placeholder="Téléphone du tuteur"
+        style={{ width: "200px", maxWidth: "none" }}  /* ⬅️ 200px fixe */
+        value={form.tuteurTel}
+        onChange={onChange("tuteurTel")}
+        onBlur={(e) => setField("tuteurTel", e.target.value)}
+      />
+    </span>
+    <div className="error">{errors.tuteurTel || ""}</div>
+  </div>
+</div>
+
           </div>
 
           {/* Colonne droite : photo (160×180) + nom de fichier tronqué */}

@@ -40,31 +40,140 @@ export default function Absence() {
   return (
     <>
       <style>{`
-        .wrap { display:flex; flex-direction:column; gap:16px; }
-        .title { color: rgb(8,57,64); font-size:22px; font-weight:800; padding-bottom:10px;
-                 border-bottom:2px solid rgb(243,117,33); }
-        .grid-3 { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:24px; margin-top:30px; }
-        .btnBig { background: rgb(8,57,64); color:#fff;margin-top: 120px; border:0; border-radius:12px; padding:22px;
-                  font-size:18px; font-weight:700; cursor:pointer; transition: transform .15s ease, filter .15s ease;}
-        .btnBig:hover { filter: brightness(1.06); transform: translateY(-1px); }
-        .back { align-self:flex-start; background:#f1f5f9; border:0; border-radius:10px; padding:8px 12px; font-weight:700; cursor:pointer; }
-        .crumbs { display:flex; gap:8px; align-items:center; color:#334155; }
-        .crumbs a { color:#0f766e; text-decoration:none; }
+        :root{
+          --ink:#0f172a; --muted:#475569; --line:#e5e7eb; --ring:#93c5fd;
+        }
+
+        /* ===== Page gradient & layout ===== */
+        .wrap{
+          min-height:100vh;
+          padding:28px 18px;
+          background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 50%, #f97316 100%);
+          display:flex; flex-direction:column; gap:18px; align-items:center;
+        }
+
+        .title{
+          color:#ffffff; font-size: clamp(22px, 2.4vw, 32px); font-weight:900;
+          letter-spacing:.3px; text-align:center; margin:2px 0 4px;
+          text-shadow:0 2px 10px rgba(0,0,0,.25);
+          border-bottom:none;
+        }
+
+        /* ===== Grid de choix (3 boutons) ===== */
+        .grid-3{
+          width:100%; max-width:1100px;
+          display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:18px; margin-top:18px;
+        }
+        @media (max-width: 900px){ .grid-3{ grid-template-columns:1fr; } }
+
+        /* ===== Gros boutons MODERNES (dégradé + glow) ===== */
+        .btnBig{
+          margin-top: 100px;
+          background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 55%, #7c3aed 100%);
+          color:#fff;
+          border:0;
+          border-radius:18px; padding:22px;
+          font-size:18px; font-weight:900; cursor:pointer;
+          box-shadow: 0 16px 38px rgba(2,6,23,.22), inset 0 1px 0 rgba(255,255,255,.25);
+          transition: transform .08s ease, filter .15s ease, box-shadow .2s ease;
+        }
+        .btnBig:hover{
+          transform: translateY(-2px);
+          filter: brightness(1.06);
+          box-shadow: 0 20px 44px rgba(2,6,23,.28);
+        }
+        .btnBig:active{ transform: translateY(-1px); }
+
+        /* ===== Petits boutons / breadcrumbs ===== */
+        .back{
+          align-self:flex-start;
+          background: linear-gradient(135deg,#cbd5e1,#94a3b8);
+          color:#0f172a;
+          border:0; border-radius:12px; padding:8px 12px; font-weight:900; cursor:pointer;
+          box-shadow:0 8px 20px rgba(2,6,23,.14);
+          transition: transform .08s ease, filter .12s ease, box-shadow .2s ease;
+        }
+        .back:hover{ transform: translateY(-1px); filter: brightness(1.02); }
+
+        .crumbs{
+          width:100%; max-width:1100px;
+          display:flex; gap:10px; align-items:center; color:#e2e8f0;
+          background: rgba(255,255,255,0.16);
+          backdrop-filter: blur(6px);
+          border:1px solid rgba(255,255,255,.35);
+          border-radius:12px; padding:10px 12px;
+          box-shadow:0 8px 20px rgba(2,6,23,.14);
+        }
+        .crumbs a{ color:#fff; text-decoration:underline; }
+
+        /* ===== Form container (glass) ===== */
+        .formWrap{
+          width:100%; max-width:1100px;
+          display:flex; justify-content:space-between; gap:20px; margin-top:16px;
+          background: rgba(255,255,255,0.92);
+          backdrop-filter: blur(8px);
+          border:1px solid rgba(255,255,255,.7);
+          border-radius:18px;
+          box-shadow:0 12px 30px rgba(2,6,23,.16);
+          padding:16px;
+        }
+        .col{ flex:1; display:flex; flex-direction:column; gap:14px; }
+        .right{ width:220px; display:flex; flex-direction:column; align-items:center; gap:15px; }
+
+        /* ===== Inputs modernisés ===== */
+        .row{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+        .lbl{ width:180px; font-weight:900; color:#083940; }
+        .read{ flex:1; background:#fff; border-radius:12px; min-height:20px; padding:10px 12px; border:1px solid var(--line); }
+        .select{
+          flex:1; padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:#fff;
+          transition:border-color .15s, box-shadow .15s;
+        }
+        .select:focus{ outline:none; border-color:var(--ring); box-shadow:0 0 0 4px rgba(147,197,253,.35); }
+
+        /* ===== Photo ===== */
+        .photo{
+          width:160px; height:160px; border-radius:50%; object-fit:cover;
+          border:4px solid #0ea5e9; box-shadow:0 10px 24px rgba(2,6,23,.18);
+          transition: transform .12s ease, box-shadow .2s ease;
+        }
+        .photo:hover{ transform: translateY(-2px); box-shadow:0 14px 30px rgba(2,6,23,.26); }
+
+        /* ===== Boutons (gradients) ===== */
+        .btns{ display:flex; gap:12px; margin:18px 0; justify-content:center; }
+        .btn{
+          padding:10px 16px; border:none; border-radius:12px; font-size:16px; font-weight:900; cursor:pointer;
+          color:#fff; box-shadow:0 10px 24px rgba(2,6,23,.18);
+          transition: transform .08s ease, filter .12s ease, box-shadow .2s ease, opacity .15s ease;
+        }
+        .btn:hover{ transform: translateY(-1px); filter: brightness(1.03); box-shadow:0 14px 28px rgba(2,6,23,.24); }
+        .primary{ background: linear-gradient(135deg,#0ea5e9,#6366f1); }
+        .secondary{ background: linear-gradient(135deg,#cbd5e1,#94a3b8); color:#0f172a; }
+        .danger{ background: linear-gradient(135deg,#ef4444,#b91c1c); }
+
+        /* ===== Radios Matin / Après-midi ===== */
+        .radioInput { position:absolute; opacity:0; width:0; height:0; }
+        .radioLabel{
+          padding: 8px 14px; border:2px solid transparent; border-radius:999px; cursor:pointer; user-select:none;
+          transition: border-color .15s, box-shadow .15s, background .15s;
+        }
+        .radioInput:checked + .radioLabel{
+          border-color:#0ea5e9; box-shadow:0 0 0 3px rgba(14,165,233,.22); background:#f0f9ff;
+        }
       `}</style>
 
       <div className="wrap">
-        <div className="title">Absence</div>
+        <div className="title">🗓️ Absence</div>
 
-        {/* NIVEAU: pas de param → 3 gros boutons */}
+        {/* NIVEAU: pas de param → 3 gros boutons (dégradé moderne) */}
         {!cycle && (
           <div className="grid-3">
-            <button className="btnBig" onClick={() => goCycle("seconde")}>Seconde</button>
-            <button className="btnBig" onClick={() => goCycle("premiere")}>Première</button>
-            <button className="btnBig" onClick={() => goCycle("terminale")}>Terminale</button>
+            <button className="btnBig" onClick={() => goCycle("seconde")}>🎓 Seconde</button>
+            <button className="btnBig" onClick={() => goCycle("premiere")}>🎓 Première</button>
+            <button className="btnBig" onClick={() => goCycle("terminale")}>🎓 Terminale</button>
           </div>
         )}
 
-        {/* SOUS-NIVEAU: on montre A/B/C ou L/S/OSE */}
+        {/* SOUS-NIVEAU: A/B/C ou L/S/OSE — mêmes boutons modernes */}
         {cycle && !sub && (
           <>
             <button className="back" onClick={() => navigate("/dashboard/absence")}>← Retour</button>
@@ -76,7 +185,7 @@ export default function Absence() {
           </>
         )}
 
-        {/* FORMULAIRE: route finale → plus de boutons, juste le formulaire */}
+        {/* FORMULAIRE: route finale — inchangé */}
         {cycle && sub && (
           <>
             <div className="crumbs">
@@ -157,7 +266,7 @@ function AbsenceForm({ cycle, sub }) {
           motif: motif || null,
         }),
       });
-      await Swal.fire("Succès", "Absence enregistrée avec succès.", "success");
+      await Swal.fire("Succès", "Absence enregistrée avec succès✅.", "success");
       resetForm();
     } catch (e) {
       Swal.fire("Erreur", e.message || "Échec de l'enregistrement.", "error");
@@ -166,83 +275,44 @@ function AbsenceForm({ cycle, sub }) {
 
   return (
     <>
-      <style>{`
-        .formWrap { display:flex; justify-content:space-between; gap:30px; margin-top:24px; }
-        .col { flex:1; display:flex; flex-direction:column; gap:14px; }
-        .row { display:flex; align-items:center; gap:12px; }
-        .lbl { width:180px; font-weight:bold; color:rgb(8,57,64); }
-        .read { flex:1; background:#f5f5f5; border-radius:6px; min-height:20px; padding:8px; }
-        .select { flex:1; padding:8px; border:1px solid #ddd; border-radius:6px; }
-        .right { width:200px; display:flex; flex-direction:column; align-items:center; gap:15px; }
-        .photo { width:150px; height:150px; border-radius:4px; object-fit:cover; border:1px solid #ddd; }
-        .btns { display:flex; gap:15px; margin:20px 0; justify-content:center; }
-        .btn { padding:10px 20px; border:none; border-radius:6px; font-size:16px; cursor:pointer; transition:.2s; color:#fff; }
-        .btn:hover{ opacity:.9; transform: translateY(-2px); }
-        .primary{ background: rgb(8,57,64); }
-        .secondary{ background:#6c757d; }
-        .danger{ background:#dc3545; }
-        .success{ background:#16a34a; } /* ← vert pour Enregistrer */
-
-        /* ——— Radios Matin / Après-midi : bordure invisible puis visible quand coché ——— */
-        .radioInput { 
-          position: absolute; 
-          opacity: 0; 
-          width: 0; 
-          height: 0; 
-        }
-        .radioLabel {
-          padding: 8px 14px;
-          border: 2px solid transparent; /* invisible par défaut */
-          border-radius: 999px;          /* encercle le label */
-          cursor: pointer;
-          user-select: none;
-          transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
-        }
-        .radioInput:checked + .radioLabel {
-          border-color: rgb(8,57,64);    /* devient visible */
-          box-shadow: 0 0 0 3px rgba(8,57,64,.12);
-          background: #f1f5f9;
-        }
-      `}</style>
-
-      <h2 style={{ textAlign:"center", color:"rgb(8,57,64)", marginTop:30 }}>{title}</h2>
+      <h2 style={{ textAlign:"center", color:"#ffffff", marginTop:8, textShadow:"0 2px 10px rgba(0,0,0,.25)" }}>📋 {title}</h2>
 
       <div className="formWrap">
         {/* Colonne gauche : formulaire */}
         <div className="col">
           <div className="row">
-            <label className="lbl">Numero :</label>
+            <label className="lbl">Numéro :</label>
             <select className="select" value={selId} onChange={(e)=>setSelId(e.target.value)}>
               <option value="">Sélectionner un élève</option>
               {eleves.map(e => (
                 <option key={e.id} value={e.id}>{e.nom} {e.prenom}</option>
               ))}
             </select>
-            <button className="btn primary" onClick={onSelectEleve} style={{padding:"8px 15px"}}>Sélectionner</button>
+            <button className="btn primary" onClick={onSelectEleve} style={{padding:"10px 16px"}}>👁️ Sélectionner</button>
           </div>
 
-          <div className="row"><label className="lbl">Nom:</label><span className="read">{cur?.nom ?? "-"}</span></div>
-          <div className="row"><label className="lbl">Prénom:</label><span className="read">{cur?.prenom ?? "-"}</span></div>
-          <div className="row"><label className="lbl">Sexe:</label><span className="read">{cur?.sexe ?? "-"}</span></div>
+          <div className="row"><label className="lbl">Nom</label><span className="read">{cur?.nom ?? "-"}</span></div>
+          <div className="row"><label className="lbl">Prénom</label><span className="read">{cur?.prenom ?? "-"}</span></div>
+          <div className="row"><label className="lbl">Sexe</label><span className="read">{cur?.sexe ?? "-"}</span></div>
           <div className="row">
-            <label className="lbl">Date de Naissance:</label>
+            <label className="lbl">Naissance</label>
             <span className="read">{cur?.dateNais ? new Date(cur.dateNais).toLocaleDateString() : "-"}</span>
-            <span className="read" style={{flex:"unset"}}>à {cur?.lieuNais ?? "-"}</span>
+            <span className="read" style={{flex:"unset"}}>📍 {cur?.lieuNais ?? "-"}</span>
           </div>
           <div className="row">
-            <label className="lbl">Classe:</label>
+            <label className="lbl">Classe</label>
             <span className="read">{cur?.niveau?.nom ?? "-"}</span>
             <span className="read" style={{flex:"unset"}}>{cur?.section?.nom ?? "-"}</span>
           </div>
           <div className="row">
-            <label className="lbl">Téléphone:</label>
-            <span className="read">{cur?.telephone ?? "-"}</span>
-            <label className="lbl" style={{width:120}}>Domicile:</label>
-            <span className="read">{cur?.domicile ?? "-"}</span>
+            <label className="lbl">Téléphone</label>
+            <span className="read">📞 {cur?.telephone ?? "-"}</span>
+            <label className="lbl" style={{width:120}}>Domicile</label>
+            <span className="read">🏠 {cur?.domicile ?? "-"}</span>
           </div>
 
           <div className="row">
-            <label className="lbl">Date d'absence:</label>
+            <label className="lbl">Date d'absence</label>
             <input className="select" type="date" value={dateAbs} onChange={(e)=>setDateAbs(e.target.value)} />
             {/* Radios Matin / Après-midi */}
             <div className="row" style={{gap:8}}>
@@ -255,7 +325,7 @@ function AbsenceForm({ cycle, sub }) {
                 checked={plage==="MATIN"}
                 onChange={(e)=>setPlage(e.target.value)}
               />
-              <label className="radioLabel" htmlFor="matin">Matin</label>
+              <label className="radioLabel" htmlFor="matin">🌞 Matin</label>
 
               <input
                 className="radioInput"
@@ -266,12 +336,12 @@ function AbsenceForm({ cycle, sub }) {
                 checked={plage==="APRES_MIDI"}
                 onChange={(e)=>setPlage(e.target.value)}
               />
-              <label className="radioLabel" htmlFor="apm">Après-midi</label>
+              <label className="radioLabel" htmlFor="apm">🌇 Après-midi</label>
             </div>
           </div>
 
           <div className="row">
-            <label className="lbl">MOTIF:</label>
+            <label className="lbl">Motif</label>
             <input className="select" type="text" value={motif} onChange={(e)=>setMotif(e.target.value)} style={{height:60}} placeholder="(optionnel)" />
           </div>
         </div>
@@ -284,17 +354,19 @@ function AbsenceForm({ cycle, sub }) {
 
       {/* Boutons */}
       <div className="btns">
-        <button className="btn success" onClick={enregistrer}>💾 Enregistrer</button>
+        <button className="btn success"  onClick={enregistrer} style={{ background: 'linear-gradient(135deg,#22c55e 0%, #16a34a 50%, #14532d 100%)' }}>💾 Enregistrer</button>
         <button className="btn secondary" onClick={resetForm}>🔄 Actualiser</button>
-        <button className="btn danger" onClick={()=>navigate("/dashboard")}>🏠 Quitter</button>
+        <button className="btn danger" onClick={() => navigate("/dashboard")} style={{ background: 'linear-gradient(135deg,#ef4444 0%, #dc2626 55%, #b91c1c 100%)' }}>🏠 Quitter</button>
+
+
       </div>
 
       <button
         className="btn primary"
-        style={{ display:"block", margin:"1px 265px 50px 265px", background:"rgb(243,117,33)" }}
+        style={{ display:"block", margin:"1px auto 50px", maxWidth:800 }}
         onClick={()=>navigate(`/dashboard/absence/archive/${cycle}/${sub}`)}
       >
-        👁️Voir les archives des absences du {cap(cycle)} {sub}
+        👁️ Voir les archives des absences du {cap(cycle)} {sub}
       </button>
     </>
   );

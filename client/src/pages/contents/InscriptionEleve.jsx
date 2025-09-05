@@ -26,63 +26,167 @@ export default function InscriptionEleve() {
   return (
     <>
       <style>{`
-        .insc-wrap { display:flex; flex-direction:column; gap:16px; }
-        .insc-title {
-          color: rgb(8,57,64); margin-bottom: 10px; padding-bottom: 10px;
-          border-bottom: 2px solid rgb(243,117,33); font-size: 1.4em; font-weight: 700;
+        :root{
+          --ink:#0f172a;
+          --brand:#083940;             /* vert-bleu principal */
+          --accent:#f37521;            /* orange */
+          --line:#e5e7eb;
+          --ring:#93c5fd;
+          --muted:#64748b;
         }
-        .btn-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 24px; margin-top: 30px; }
-        .big-btn { background: rgb(8,57,64);margin-top: 130px; color:#fff; border:0; border-radius:12px; padding:24px;
-          text-align:center; font-size:18px; font-weight:700; text-decoration:none; display:block;
-          transition: transform .15s ease, filter .15s ease; cursor:pointer; }
-        .big-btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
-        .back-btn { align-self:flex-start; background:#f1f5f9; color:#0f172a; border:0; border-radius:10px; padding:8px 12px; font-weight:700; cursor:pointer; }
-        @media (max-width:700px){ .btn-grid{ grid-template-columns: 1fr; } }
 
-        /* blocs */
-        .zone { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-top: 14px; }
-        .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; }
-        .title { font-weight:700; color:rgb(8,57,64); border-bottom:2px solid rgb(243,117,33); padding-bottom:8px; margin-bottom:12px; }
+        /* ===== Conteneur principal façon "Absence" ===== */
+        .insc-wrap{
+          min-height:100vh;
+          padding:28px 18px;
+          background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 50%, #f97316 100%);
+          display:flex; flex-direction:column; gap:18px; align-items:center;
+        }
+
+        /* ===== Titre ===== */
+        .insc-title{
+          color:#fff; font-size: clamp(22px, 2.4vw, 32px); font-weight:900;
+          letter-spacing:.3px; text-align:center; margin:2px 0 4px;
+          text-shadow:0 2px 10px rgba(0,0,0,.25);
+          display:flex; align-items:center; gap:10px;
+        }
+        .insc-title::before{ content:"📝"; }
+
+        /* ===== Choix de niveau (root) : BOUTONS MODERNES (dégradé + glow) ===== */
+        .btn-grid{
+          width:100%; max-width:1100px;
+          display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:18px; margin-top:18px;
+        }
+        @media (max-width:700px){ .btn-grid{ grid-template-columns:1fr; } }
+
+        .big-btn{
+          margin-top: 100px;
+          color:#fff;
+          border:0;
+          border-radius:18px; padding:24px;
+          font-size:18px; font-weight:900; cursor:pointer; text-align:center;
+          background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 55%, #7c3aed 100%);
+          box-shadow: 0 16px 38px rgba(2,6,23,.22), inset 0 1px 0 rgba(255,255,255,.25);
+          transition: transform .08s ease, filter .15s ease, box-shadow .2s ease;
+        }
+        .big-btn:hover{
+          transform: translateY(-2px);
+          filter: brightness(1.06);
+          box-shadow: 0 20px 44px rgba(2,6,23,.28);
+        }
+        .big-btn:active{ transform: translateY(-1px); }
+
+        /* ===== Bouton retour ===== */
+        .back-btn{
+          align-self:flex-start;
+          background: linear-gradient(135deg,#cbd5e1,#94a3b8);
+          color:#0f172a; border:0; border-radius:12px; padding:8px 12px; font-weight:900; cursor:pointer;
+          box-shadow:0 8px 20px rgba(2,6,23,.14);
+          transition: transform .08s ease, filter .12s ease, box-shadow .2s ease;
+        }
+        .back-btn:hover{ transform: translateY(-1px); filter: brightness(1.02); }
+
+        /* ===== Zone cartes (verre blanc) ===== */
+        .zone{
+          width:100%; max-width:1100px;
+          display:grid; grid-template-columns: 2fr 1fr; gap:16px; margin-top:14px;
+        }
         @media (max-width:900px){ .zone{ grid-template-columns:1fr; } }
 
-        /* table */
-        table { width:100%; border-collapse: collapse; }
-        th, td { border:1px solid #e5e7eb; padding:10px; }
-        th { background: rgb(8,57,64); color:#fff; }
+        .card{
+          background: rgba(255,255,255,0.94);
+          backdrop-filter: blur(8px);
+          border:1px solid rgba(255,255,255,.7);
+          border-radius:18px; padding:16px;
+          box-shadow:0 12px 30px rgba(2,6,23,.16);
+        }
+
+        .title{
+          font-weight:900; color:var(--brand);
+          border-bottom:2px solid var(--accent);
+          padding-bottom:8px; margin-bottom:12px;
+          display:flex; gap:10px; align-items:center;
+        }
+
+        /* ===== Table ===== */
+        table{ width:100%; border-collapse: collapse; }
+        th, td{ border:1px solid var(--line); padding:10px; }
+        th{
+          background:var(--brand); color:#fff; text-align:left;
+          position:sticky; top:0; z-index:1;
+        }
         tr:nth-child(even){ background:#f8fafc; }
         tr:hover{ background:#eef2ff; cursor:pointer; }
 
-        /* droite */
-        .right { display:flex; flex-direction:column; align-items:center; gap:10px; }
-        .avatar { width:150px; height:150px; border-radius:50%; object-fit:cover; border:3px solid rgb(8,57,64); }
-        .muted { color:#475569; }
+        /* ===== Colonne droite ===== */
+        .right{ display:flex; flex-direction:column; align-items:center; gap:10px; }
+        .avatar{
+          width:150px; height:150px; border-radius:50%; object-fit:cover;
+          border:4px solid #0ea5e9; box-shadow:0 10px 24px rgba(2,6,23,.18);
+          transition: transform .12s ease, box-shadow .2s ease;
+        }
+        .avatar:hover{ transform: translateY(-2px); box-shadow:0 14px 30px rgba(2,6,23,.26); }
+        .muted{ color:#64748b; }
 
-        /* boutons */
-        .btn { padding:10px 14px; border:0; border-radius:10px; font-weight:700; cursor:pointer; }
-        .btn-primary { background: rgb(8,57,64); color:#fff; }
-        .btn-secondary { background:#6c757d; color:#fff; }
-        .btn-danger { background:#dc3545; color:#fff; }
-        .btn-disabled { opacity:.55; cursor:not-allowed; }
+        /* ===== Boutons standards ===== */
+        .btn{
+          padding:10px 14px; border:0; border-radius:12px; font-weight:900; cursor:pointer;
+          box-shadow:0 10px 24px rgba(2,6,23,.18);
+          transition: transform .08s ease, filter .12s ease, box-shadow .2s ease, opacity .15s ease;
+        }
+        .btn:active{ transform: translateY(0); }
+        .btn-primary{ background: linear-gradient(135deg,#0ea5e9,#6366f1); color:#fff; }
+        .btn-secondary{ background: linear-gradient(135deg,#cbd5e1,#94a3b8); color:#0f172a; }
+        .btn-danger{ background: linear-gradient(135deg,#ef4444,#b91c1c); color:#fff; }
+        .btn:hover{ transform: translateY(-1px); filter: brightness(1.03); }
+        .btn-disabled{ opacity:.55; cursor:not-allowed; box-shadow:none !important; }
 
-        /* PT */
-        .form-grid { display:grid; grid-template-columns: 2fr 1fr; gap:16px; }
-        .row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
-        .lbl { width: 170px; font-weight:600; color:rgb(8,57,64); }
-        .read { flex:1; background:#f1f5f9; border-radius:8px; padding:8px 10px; min-height: 18px; }
-        .sel { padding:8px 10px; border:1px solid #e5e7eb; border-radius:8px; }
-        .rect-avatar { width:150px; height:150px; border-radius:8px; object-fit:cover; border:1px solid #e5e7eb; }
-        .btns { display:flex; gap:10px; justify-content:flex-end; margin-top: 12px; }
+        /* ===== Form PT ===== */
+        .form-grid{
+          width:100%; max-width:1100px;
+          display:grid; grid-template-columns: 2fr 1fr; gap:16px;
+        }
         @media (max-width:900px){ .form-grid{ grid-template-columns:1fr; } }
 
-        /* Modal voir profil */
-        .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; z-index: 60; }
-        .modal { width:min(640px, 92vw); background:#fff; border-radius:12px; border:1px solid #e5e7eb; box-shadow:0 18px 48px rgba(2,6,23,.25); }
-        .modal-hd { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid #e5e7eb; font-weight:700; }
-        .modal-bd { padding:16px; display:grid; grid-template-columns:140px 1fr; gap:16px; }
-        .modal-ft { padding:12px 16px; border-top:1px solid #e5e7eb; display:flex; justify-content:flex-end; }
-        .kv { display:flex; gap:8px; margin-bottom:6px; }
-        .k { width:180px; color:#334155; font-weight:600; }
-        .v { flex:1; }
+        .row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+        .lbl{ width:170px; font-weight:900; color:var(--brand); }
+        .read{ flex:1; background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 12px; min-height: 18px; }
+        .sel{
+          padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:#fff;
+          outline:none; transition: border-color .15s, box-shadow .15s;
+        }
+        .sel:focus{ border-color:var(--ring); box-shadow:0 0 0 4px rgba(147,197,253,.35); }
+        .rect-avatar{
+          width:180px; height:180px; border-radius:12px; object-fit:cover; border:1px solid #e5e7eb;
+          box-shadow:0 10px 26px rgba(2,6,23,.12);
+        }
+        .btns{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
+
+        /* ===== Modal Voir profil ===== */
+        .modal-bg{
+          position:fixed; inset:0;
+          background: radial-gradient(120% 140% at 50% 0%, rgba(8,57,64,.30) 0%, rgba(8,57,64,.12) 60%, rgba(0,0,0,.45) 100%);
+          display:flex; align-items:center; justify-content:center; z-index:60;
+        }
+        .modal{
+          width:min(640px, 92vw);
+          background:#fff; border-radius:14px; border:1px solid #e5e7eb;
+          box-shadow:0 22px 60px rgba(2,6,23,.30); overflow:hidden;
+        }
+        .modal-hd{
+          display:flex; align-items:center; justify-content:space-between; padding:12px 16px;
+          border-bottom:1px solid #e5e7eb; font-weight:900; color:var(--brand);
+          background: linear-gradient(135deg, rgba(243,117,33,.16) 0%, rgba(243,117,33,0) 100%);
+        }
+        .modal-bd{ padding:16px; display:grid; grid-template-columns:140px 1fr; gap:16px; }
+        .modal-ft{
+          padding:12px 16px; border-top:1px solid #e5e7eb;
+          background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+          display:flex; justify-content:flex-end;
+        }
+        .kv{ display:flex; gap:8px; margin-bottom:6px; }
+        .k{ width:180px; color:#334155; font-weight:700; }
+        .v{ flex:1; }
         @media (max-width:600px){ .modal-bd{ grid-template-columns:1fr; } .k{ width:120px; } }
       `}</style>
 
@@ -91,8 +195,8 @@ export default function InscriptionEleve() {
 
         {tab === "root" && (
           <div className="btn-grid">
-            <button className="big-btn" onClick={() => setTab("seconde")}>Seconde</button>
-            <button className="big-btn" onClick={() => setTab("pt")}>Première & Terminal</button>
+            <button className="big-btn" onClick={() => setTab("seconde")}>🧑‍🎓 Seconde</button>
+            <button className="big-btn" onClick={() => setTab("pt")}>🏫 Première & Terminal</button>
           </div>
         )}
 
@@ -192,14 +296,14 @@ function SecondeView({ userRole }) {
       <div className="zone">
         <div className="card">
           <div className="title" style={{display:"flex", justifyContent:"space-between", alignItems:"center"}}>
-            <span>Élèves de Seconde</span>
+            <span>📋 Élèves de Seconde</span>
             <button
               className={`btn btn-primary ${!isProviseur ? "btn-disabled" : ""}`}
               onClick={divide}
               disabled={!isProviseur}
               title={isProf ? "Seul le proviseur peut diviser les sections." : ""}
             >
-              ➗Diviser en sections
+              ➗ Diviser en sections
             </button>
           </div>
 
@@ -226,7 +330,7 @@ function SecondeView({ userRole }) {
                 className="btn btn-primary"
                 style={{ alignSelf: "center", marginTop: 10 }}
                 onClick={() => navigate("/dashboard/inscrits")}>
-                👁️Voir liste des élèves inscrits
+                👁️ Voir liste des élèves inscrits
               </button>
           </div>
         </div>
@@ -247,7 +351,7 @@ function SecondeView({ userRole }) {
               </div>
 
               <button className="btn btn-primary" style={{ marginTop: 10 }} onClick={() => setShowModal(true)}>
-                Voir le profil
+                👁️‍🗨️ Voir le profil
               </button>
             </>
           )}
@@ -259,7 +363,7 @@ function SecondeView({ userRole }) {
         <div className="modal-bg" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={(e)=>e.stopPropagation()}>
             <div className="modal-hd">
-              <span>Profil élève</span>
+              <span>👤 Profil élève</span>
               <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Fermer</button>
             </div>
             <div className="modal-bd">
@@ -371,7 +475,7 @@ function PremiereTerminalView() {
 
   return (
     <>
-      <div className="title">Inscription — Première & Terminal</div>
+      <div className="title">📚 Inscription — Première & Terminal</div>
 
       <div className="form-grid">
         <div className="card">
@@ -383,7 +487,7 @@ function PremiereTerminalView() {
                 <option key={e.id} value={e.id}>{e.id} — {e.nom} {e.prenom}</option>
               ))}
             </select>
-            <button className="btn btn-primary" onClick={onSelect}>Sélectionner</button>
+            <button className="btn btn-primary" onClick={onSelect}>🔎 Sélectionner</button>
           </div>
 
           <div className="row"><span className="lbl">Nom:</span><span className="read">{cur?.nom || "-"}</span></div>
@@ -419,17 +523,26 @@ function PremiereTerminalView() {
                 if (fileRef.current) fileRef.current.value = "";
               }}
             >
-              🔄️Actualiser
+              🔄️ Actualiser
             </button>
-            <button className="btn btn-danger" onClick={()=>window.history.back()}>❌Quitter</button>
+            <button className="btn btn-danger" onClick={()=>window.history.back()}>❌ Quitter</button>
             <button className="btn btn-primary" onClick={save} disabled={!cur || saving}>
-              {saving ? "✅Enregistrement..." : "✅Enregistrer"}
+              {saving ? "⏳ Enregistrement..." : "✅ Enregistrer"}
             </button>
           </div>
         </div>
 
         <div className="card right">
           <img className="rect-avatar" src={photoPreview} alt="Photo étudiant" />
+          <div style={{display:"flex", flexDirection:"column", gap:8}}>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              onChange={pickPhoto}
+              style={{maxWidth:220}}
+            />
+          </div>
         </div>
       </div>
 
@@ -438,10 +551,8 @@ function PremiereTerminalView() {
         style={{ alignSelf: "center", marginTop: 10 }}
         onClick={() => navigate("/dashboard/inscrits")}
       >
-        👁️Voir liste des élèves inscrits
+        👁️ Voir liste des élèves inscrits
       </button>
-
-
     </>
   );
 }

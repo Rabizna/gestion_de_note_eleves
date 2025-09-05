@@ -35,64 +35,127 @@ export default function Notes() {
   return (
     <>
       <style>{`
-        .wrap { display:flex; flex-direction:column; gap:16px; }
-        .title { color: rgb(8,57,64); font-size:22px; font-weight:800; padding-bottom:10px;
-                 border-bottom:2px solid rgb(243,117,33); }
-        .grid-3 { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:24px; margin-top:30px; }
-
-        .btnBig {
-          color:#fff; border:0; border-radius:12px; padding:22px; font-size:18px; font-weight:700; cursor:pointer;
-          background: linear-gradient(135deg, rgba(8,57,64,1) 0%, rgba(15,118,110,1) 100%);
-          transition: transform .15s ease, filter .15s ease, box-shadow .15s ease;
-          margin-top: 120px;
-          box-shadow: 0 10px 22px rgba(2,6,23,.18);
+        :root{
+          --ink:#0f172a; --muted:#475569; --line:#e5e7eb; --ring:#93c5fd;
         }
-        .btnBig:hover { filter: brightness(1.06); transform: translateY(-1px); box-shadow: 0 14px 28px rgba(2,6,23,.24); }
 
-        .back { align-self:flex-start; background:#f1f5f9; border:0; border-radius:10px; padding:8px 12px; font-weight:700; cursor:pointer; }
-        .crumbs { display:flex; gap:8px; align-items:center; color:#334155; }
-        .crumbs a { color:#0f766e; text-decoration:none; }
+        /* ===== Page gradient & layout (même esprit qu'Absence) ===== */
+        .wrap{
+          min-height:100vh;
+          padding:28px 18px;
+          background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 50%, #f97316 100%);
+          display:flex; flex-direction:column; gap:18px; align-items:center;
+        }
 
-        .formWrap { display:flex; justify-content:space-between; gap:30px; margin-top:24px; }
-        .col { flex:1; display:flex; flex-direction:column; gap:14px; }
-        .row { display:flex; align-items:center; gap:12px; }
-        .lbl { width:190px; font-weight:800; color:rgb(8,57,64); }
-        .read { flex:1; background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px; min-height:20px; padding:10px; }
-        .select, .input {
-          flex:1; padding:12px; border:1px solid #e5e7eb; border-radius:12px; background:#fff; font-size:14px;
+        .title{
+          color:#ffffff; font-size: clamp(22px, 2.4vw, 32px); font-weight:900;
+          letter-spacing:.3px; text-align:center; margin:2px 0 4px;
+          text-shadow:0 2px 10px rgba(0,0,0,.25);
+          border-bottom:none;
+        }
+
+        /* ===== Grids de choix ===== */
+        .grid-3{
+          width:100%; max-width:1100px;
+          display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:18px; margin-top:18px;
+        }
+        @media (max-width: 900px){ .grid-3{ grid-template-columns:1fr; } }
+
+        /* ===== Gros boutons (niveaux + sous-boutons) ===== */
+        .btnBig{
+          background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 55%, #7c3aed 100%);
+          color:#fff; border:0; border-radius:18px; padding:22px;
+          font-size:18px; font-weight:900; cursor:pointer;
+          box-shadow: 0 16px 38px rgba(2,6,23,.22), inset 0 1px 0 rgba(255,255,255,.25);
+          transition: transform .08s ease, filter .15s ease, box-shadow .2s ease;
+          margin-top:120px;
+        }
+        .btnBig:hover{ transform: translateY(-2px); filter: brightness(1.06); box-shadow: 0 20px 44px rgba(2,6,23,.28); }
+        .btnBig:active{ transform: translateY(-1px); }
+
+        /* ===== Petits boutons / fil d’Ariane ===== */
+        .back{
+          align-self:flex-start;
+          background: linear-gradient(135deg,#cbd5e1,#94a3b8);
+          color:#0f172a;
+          border:0; border-radius:12px; padding:8px 12px; font-weight:900; cursor:pointer;
+          box-shadow:0 8px 20px rgba(2,6,23,.14);
+          transition: transform .08s ease, filter .12s ease, box-shadow .2s ease;
+        }
+        .back:hover{ transform: translateY(-1px); filter: brightness(1.02); }
+
+        .crumbs{
+          width:100%; max-width:1100px;
+          display:flex; gap:10px; align-items:center; color:#e2e8f0;
+          background: rgba(255,255,255,0.16);
+          backdrop-filter: blur(6px);
+          border:1px solid rgba(255,255,255,.35);
+          border-radius:12px; padding:10px 12px;
+          box-shadow:0 8px 20px rgba(2,6,23,.14);
+        }
+        .crumbs a{ color:#fff; text-decoration:underline; }
+
+        /* ===== Form container (glass) ===== */
+        .formWrap{
+          width:100%; max-width:1100px;
+          display:flex; justify-content:space-between; gap:20px; margin-top:16px;
+          background: rgba(255,255,255,0.92);
+          backdrop-filter: blur(8px);
+          border:1px solid rgba(255,255,255,.7);
+          border-radius:18px;
+          box-shadow:0 12px 30px rgba(2,6,23,.16);
+          padding:16px;
+        }
+        .col{ flex:1; display:flex; flex-direction:column; gap:14px; }
+        .row{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+        .lbl{ width:190px; font-weight:900; color:#083940; }
+        .read{ flex:1; background:#fff; border-radius:12px; min-height:20px; padding:10px 12px; border:1px solid var(--line); }
+        .select, .input{
+          flex:1; padding:12px; border:1px solid var(--line); border-radius:12px; background:#fff; font-size:14px;
           outline:none; transition:border-color .15s, box-shadow .15s;
         }
-        .select:focus, .input:focus { border-color:#93c5fd; box-shadow:0 0 0 3px rgba(147,197,253,.35); }
-        .right { width:220px; display:flex; flex-direction:column; align-items:center; gap:16px; }
-        .photo { width:160px; height:160px; border-radius:10px; object-fit:cover; border:1px solid #e5e7eb; background:#fff; }
+        .select:focus, .input:focus{ border-color:var(--ring); box-shadow:0 0 0 4px rgba(147,197,253,.35); }
 
-        .btns { display:flex; gap:14px; margin:22px 0 10px; justify-content:center; flex-wrap:wrap; }
-        .btn { padding:12px 18px; border:none; border-radius:12px; font-size:15px; font-weight:800; cursor:pointer; color:#fff;
-               transition: transform .12s ease, filter .12s ease, box-shadow .12s ease; box-shadow: 0 6px 16px rgba(2,6,23,.14); }
-        .btn:hover { filter:brightness(1.06); transform: translateY(-1px); }
-        .gradSave   { background: linear-gradient(135deg,#22c55e,#16a34a); }
-        .gradReset  { background: linear-gradient(135deg,#64748b,#334155); }
-        .gradQuit   { background: linear-gradient(135deg,#ef4444,#dc2626); }
-        .pill { padding:6px 10px; background:#ecfeff; border:1px solid #bae6fd; border-radius:999px; font-size:12px; font-weight:700; color:#075985; }
+        .right{ width:220px; display:flex; flex-direction:column; align-items:center; gap:16px; }
+        .photo {width: 160px;height: 160px;border-radius: 50%;object-fit: cover;border: 4px solid #0ea5e9;box-shadow: 0 10px 24px rgba(2,6,23,.18);transition: transform .12s ease, box-shadow .2s ease;}
+        }
+        .photo:hover {transform: translateY(-3px);box-shadow: 0 14px 30px rgba(2,6,23,.26);}
+
+        /* ===== Boutons d’action ===== */
+        .btns{ display:flex; gap:14px; margin:22px 0 10px; justify-content:center; flex-wrap:wrap; }
+        .btn{
+          padding:12px 18px; border:none; border-radius:12px; font-size:15px; font-weight:900; cursor:pointer; color:#fff;
+          transition: transform .12s ease, filter .12s ease, box-shadow .12s ease; box-shadow: 0 10px 24px rgba(2,6,23,.18);
+        }
+        .btn:hover{ filter:brightness(1.06); transform: translateY(-1px); }
+        .gradSave  { background: linear-gradient(135deg,#22c55e,#16a34a); }
+        .gradReset { background: linear-gradient(135deg,#cbd5e1,#94a3b8); color:#0f172a; }
+        .gradQuit  { background: linear-gradient(135deg,#ef4444,#b91c1c); }
+
+        .pill{
+          padding:6px 10px; background:#ecfeff; border:1px solid #bae6fd; border-radius:999px;
+          font-size:12px; font-weight:800; color:#075985;
+        }
 
         @media (max-width: 980px){
-          .grid-3 { grid-template-columns: 1fr; }
           .formWrap { flex-direction:column; }
           .right { width:100%; align-items:flex-start; }
         }
       `}</style>
 
       <div className="wrap">
-        <div className="title">Notes</div>
+        <div className="title">📝 Notes</div>
 
+        {/* NIVEAU */}
         {!cycle && (
           <div className="grid-3">
-            <button className="btnBig" onClick={() => goCycle("seconde")}>Seconde</button>
-            <button className="btnBig" onClick={() => goCycle("premiere")}>Première</button>
-            <button className="btnBig" onClick={() => goCycle("terminale")}>Terminale</button>
+            <button className="btnBig" onClick={() => goCycle("seconde")}>🎓 Seconde</button>
+            <button className="btnBig" onClick={() => goCycle("premiere")}>🎓 Première</button>
+            <button className="btnBig" onClick={() => goCycle("terminale")}>🎓 Terminale</button>
           </div>
         )}
 
+        {/* SOUS-NIVEAU (sous-boutons modernisés) */}
         {cycle && !sub && (
           <>
             <button className="back" onClick={() => navigate("/dashboard/notes")}>← Retour</button>
@@ -104,6 +167,7 @@ export default function Notes() {
           </>
         )}
 
+        {/* FORMULAIRE */}
         {cycle && sub && (
           <>
             <div className="crumbs">
@@ -204,7 +268,7 @@ function NoteForm({ cycle, sub }) {
           note: n,
         },
       });
-      await SWAL({ icon:"success", title:"Succès", text:"💾 Note enregistrée avec succès." });
+      await SWAL({ icon:"success", title:"Succès", text:" Note enregistrée avec succès✅." });
       resetForm();
     } catch (e) {
       SWAL({ icon:"error", title:"Erreur", text: e.message || "Échec de l'enregistrement." });
@@ -213,8 +277,8 @@ function NoteForm({ cycle, sub }) {
 
   return (
     <>
-      <h2 style={{ textAlign:"center", color:"rgb(8,57,64)", marginTop:30 }}>
-        Note {cap(cycle)} {sub}
+      <h2 style={{ textAlign:"center", color:"#ffffff", marginTop:8, textShadow:"0 2px 10px rgba(0,0,0,.25)" }}>
+        🧮 Note {cap(cycle)} {sub}
       </h2>
 
       <div className="formWrap">
@@ -238,7 +302,7 @@ function NoteForm({ cycle, sub }) {
           <div className="row">
             <label className="lbl">Date de naissance :</label>
             <span className="read">{eleve?.dateNais ? new Date(eleve.dateNais).toLocaleDateString() : "-"}</span>
-            <span className="read" style={{flex:"unset"}}>à {eleve?.lieuNais ?? "-"}</span>
+            <span className="read" style={{flex:"unset"}}>📍 {eleve?.lieuNais ?? "-"}</span>
           </div>
 
           <div className="row">
@@ -249,9 +313,9 @@ function NoteForm({ cycle, sub }) {
 
           <div className="row">
             <label className="lbl">Téléphone :</label>
-            <span className="read">{eleve?.telephone ?? "-"}</span>
+            <span className="read">📞 {eleve?.telephone ?? "-"}</span>
             <label className="lbl" style={{width:120}}>Domicile :</label>
-            <span className="read">{eleve?.domicile ?? "-"}</span>
+            <span className="read">🏠 {eleve?.domicile ?? "-"}</span>
           </div>
 
           {/* Sélecteurs */}
@@ -288,7 +352,7 @@ function NoteForm({ cycle, sub }) {
 
           <div className="row">
             <label className="lbl">Note (sur 20) :</label>
-            <input className="input" type="number" min="0" max="20" step="0.5" value={note} onChange={(e)=>setNote(e.target.value)} placeholder="Entrez la note" />
+            <input className="input" type="number" min="0" max="20" step="0.25" value={note} onChange={(e)=>setNote(e.target.value)} placeholder="Entrez la note" />
             <label className="lbl" style={{width:110}}>Mention :</label>
             <span className="read" style={{flex:"unset", minWidth:160}}>
               {Number.isFinite(Number(note)) ? (
@@ -325,12 +389,12 @@ function NoteForm({ cycle, sub }) {
       <div className="btns">
         <button className="btn gradSave"  onClick={save}>💾 Enregistrer</button>
         <button className="btn gradReset" onClick={resetForm}>🔄 Actualiser</button>
-        <button className="btn gradQuit" onClick={()=>navigate("/dashboard")}>🏠 Quitter</button>
+        <button className="btn gradQuit" onClick={()=>navigate("/dashboard") }>🏠 Quitter</button>
       </div>
 
       <button
         className="btn"
-        style={{ display:"block", margin:"1px 265px 50px 265px",
+        style={{ display:"block", margin:"1px auto 50px", maxWidth:800,
                  background:"linear-gradient(135deg,#f59e0b,#f97316)" }}
         onClick={()=>navigate(`/dashboard/notes/archive/${cycle}/${sub}`)}
       >

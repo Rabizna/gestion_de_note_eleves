@@ -52,10 +52,10 @@ export default function AbsenceArchive() {
     const labels = stats.map((s) => shortestWord(`${s.nom} ${s.prenom}`));
     const data = stats.map((s) => s.total);
     const colors = data.map((n) => {
-      if (n === 0) return "#28a745";
-      if (n <= 3) return "#ffc107";
-      if (n <= 6) return "#fd7e14";
-      return "#dc3545";
+      if (n === 0) return "#22c55e";
+      if (n <= 3) return "#fde047";
+      if (n <= 6) return "#fb923c";
+      return "#ef4444";
     });
 
     if (chartRef.current) chartRef.current.destroy();
@@ -71,7 +71,7 @@ export default function AbsenceArchive() {
             backgroundColor: colors,
             borderColor: colors,
             borderWidth: 1,
-            borderRadius: 4,
+            borderRadius: 6,
             borderSkipped: false,
           },
         ],
@@ -142,39 +142,92 @@ export default function AbsenceArchive() {
   return (
     <>
       <style>{`
-        .wrap{ display:flex; flex-direction:column; gap:16px; }
-        .title{ color:rgb(8,57,64); font-size:22px; font-weight:800; padding-bottom:10px; border-bottom:2px solid rgb(243,117,33); }
-        .grid{ display:grid; grid-template-columns: 2fr 1fr; gap:18px; }
+        :root{ --ink:#0f172a; --muted:#475569; --line:#e5e7eb; --ring:#93c5fd; }
+
+        /* ===== Page gradient ===== */
+        .wrap{
+          min-height:100vh;
+          padding:28px 18px;
+          background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 50%, #f97316 100%);
+          display:flex; flex-direction:column; gap:18px; align-items:center;
+        }
+
+        .title{
+          color:#ffffff; font-size: clamp(22px, 2.4vw, 32px); font-weight:900;
+          letter-spacing:.3px; text-align:center; margin:2px 0 4px;
+          text-shadow:0 2px 10px rgba(0,0,0,.25);
+          border-bottom:none;
+        }
+
+        .grid{ width:100%; max-width:1200px; display:grid; grid-template-columns: 2fr 1fr; gap:18px; }
         @media (max-width:900px){ .grid{ grid-template-columns:1fr; } }
-        .card{ background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:14px; }
-        table{ width:100%; border-collapse: collapse; }
-        th,td{ border:1px solid #e5e7eb; padding:10px; }
-        th{ background:rgb(8,57,64); color:#fff; }
-        tr:nth-child(even){ background:#f8fafc; }
-        tr:hover{ background:#e6f7ff; cursor:pointer; }
-        .selected{ background: rgba(8,57,64,.08) !important; }
-        .photo{ width:100px; height:100px; border-radius:50%; object-fit:cover; border:4px solid rgb(8,57,64); margin:10px auto; display:block; }
-        .name{ text-align:center; color:rgb(8,57,64); font-weight:700; margin-top:8px; }
-        .chip{ display:inline-block; background:rgba(243,117,33,.1); color:rgb(243,117,33); font-weight:700; border-radius:14px; padding:3px 10px; margin:6px auto; }
+
+        /* ===== Cards “glass” ===== */
+        .card{
+          background: rgba(255,255,255,0.92);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          border: 1px solid rgba(255,255,255,.7);
+          border-radius: 18px;
+          padding: 14px;
+          box-shadow: 0 12px 30px rgba(2,6,23,.16);
+          color: var(--ink);
+        }
+
+        /* ===== Table ===== */
+        table{ width:100%; border-collapse:separate; border-spacing:0; background:#fff; border-radius:12px; overflow:hidden; }
+        th,td{ border-bottom:1px solid var(--line); padding:12px 10px; }
+        th{
+          background: linear-gradient(135deg, #0f172a, #1f2937);
+          color:#fff; font-weight:900; letter-spacing:.25px; text-align:left;
+          position:sticky; top:0; z-index:1;
+        }
+        tr:nth-child(even) td{ background:#fafafa; }
+        tr:hover td{ background:#eef2ff; cursor:pointer; }
+        .selected td{ background:rgba(14,165,233,.14) !important; }
+
+        /* ===== Photo + infos ===== */
+        .photo{
+          width:110px; height:110px; border-radius:50%; object-fit:cover;
+          border:4px solid #0ea5e9; margin:10px auto; display:block;
+          box-shadow:0 10px 24px rgba(2,6,23,.18);
+          transition: transform .12s ease, box-shadow .2s ease;
+        }
+        .photo:hover{ transform: translateY(-2px); box-shadow:0 14px 30px rgba(2,6,23,.26); }
+        .name{ text-align:center; color:#083940; font-weight:900; margin-top:8px; }
+        .chip{
+          display:inline-block; background:rgba(14,165,233,.12); color:#0ea5e9; font-weight:800;
+          border-radius:14px; padding:4px 10px; margin:6px auto;
+        }
+
         .row{ display:flex; align-items:center; gap:10px; margin:8px 0; }
-        .lbl{ width:120px; color:#334155; font-weight:600; }
-        .read{ flex:1; background:#f5f5f5; border-radius:6px; padding:8px; min-height:20px; }
+        .lbl{ width:120px; color:#334155; font-weight:800; }
+        .read{ flex:1; background:#fff; border-radius:12px; padding:8px 10px; min-height:20px; border:1px solid var(--line); }
+
+        /* ===== Switch ===== */
         .switch{ position:relative; width:52px; height:28px; }
         .switch input{ opacity:0; width:0; height:0; }
         .slider{ position:absolute; inset:0; background:#cbd5e1; border-radius:999px; transition:.2s; }
         .slider::before{ content:""; position:absolute; width:22px; height:22px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s; box-shadow:0 2px 6px rgba(0,0,0,.2); }
-        .switch input:checked + .slider{ background:rgb(8,57,64); }
+        .switch input:checked + .slider{ background:#0ea5e9; }
         .switch input:checked + .slider::before{ transform: translateX(24px); }
-        .btn{ padding:10px 12px; border:0; border-radius:10px; font-weight:700; cursor:pointer; color:#fff; }
-        .btn:hover{ opacity:.92; }
-        .primary{ background: rgb(8,57,64); }
-        .secondary{ background:#6c757d; }
-        .danger{ background:#dc3545; }
+
+        /* ===== Buttons (gradients) ===== */
+        .btn{
+          padding:10px 14px; border:0; border-radius:12px; font-weight:900; cursor:pointer; color:#fff;
+          box-shadow:0 10px 24px rgba(2,6,23,.18);
+          transition: transform .08s ease, filter .12s ease, box-shadow .2s ease, opacity .15s ease;
+        }
+        .btn:hover{ transform: translateY(-1px); filter: brightness(1.03); box-shadow:0 14px 28px rgba(2,6,23,.24); }
+        .primary{ background: linear-gradient(135deg,#0ea5e9,#6366f1); }
+        .secondary{ background: linear-gradient(135deg,#cbd5e1,#94a3b8); color:#0f172a; }
+        .danger{ background: linear-gradient(135deg,#ef4444,#b91c1c); }
+
         .chartBox{ height:400px; margin-top:14px; }
       `}</style>
 
       <div className="wrap">
-        <div className="title">{title}</div>
+        <div className="title">📚 {title}</div>
 
         <button className="btn secondary" onClick={() => navigate(`/dashboard/absence/${cycle}`)}>
           ← Retour
@@ -183,7 +236,7 @@ export default function AbsenceArchive() {
         <div className="grid">
           {/* GAUCHE : Tableau élèves + Graph */}
           <div className="card">
-            <h3 className="section-title" style={{margin:"0 0 10px 0"}}>Élèves</h3>
+            <h3 className="section-title" style={{margin:"0 0 10px 0"}}>🧑‍🎓 Élèves</h3>
             {eleves.length ? (
               <table>
                 <thead>
@@ -204,11 +257,11 @@ export default function AbsenceArchive() {
                 </tbody>
               </table>
             ) : (
-              <div style={{color:"#dc3545"}}>Aucun élève trouvé.</div>
+              <div style={{color:"#ef4444"}}>Aucun élève trouvé.</div>
             )}
 
             <div className="chartBox">
-              <h3 className="section-title" style={{margin:"14px 0 10px 0"}}>Statistiques des absences</h3>
+              <h3 className="section-title" style={{margin:"14px 0 10px 0"}}>📊 Statistiques des absences</h3>
               <canvas ref={canvasRef} />
             </div>
           </div>
@@ -224,7 +277,7 @@ export default function AbsenceArchive() {
                 <div className="chip">{selected.niveau?.nom ?? "-"} — {selected.section?.nom ?? "-"}</div>
 
                 <div className="row" style={{marginTop:10}}>
-                  <span className="lbl">Modifier :</span>
+                  <span className="lbl">Modifier</span>
                   <label className="switch">
                     <input type="checkbox" checked={canEdit} onChange={(e)=>setCanEdit(e.target.checked)} />
                     <span className="slider"></span>

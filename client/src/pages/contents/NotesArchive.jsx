@@ -237,45 +237,122 @@ export default function NotesArchive() {
   if (loading) return <div>Chargement…</div>;
 
   return (
-    <div className="content" style={{ padding: 15, background: "#fff" }}>
+    <div className="wrap">
       <style>{`
-        .section-title { color: rgb(8,57,64); margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid rgb(243,117,33); text-align: center; font-size: 22px; }
-        .filters-container { background-color:#f8f9fa; padding:10px; border-radius:8px; margin-bottom:20px; box-shadow:0 2px 5px rgba(0,0,0,0.1); box-sizing:border-box; }
-        .filters-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-        .filter-group { display:flex; align-items:center; gap:8px; flex-direction:row; flex-wrap:wrap; }
-        .filter-group label { font-weight:bold; color:rgb(8,57,64); min-width:60px; font-size:14px; white-space:nowrap; }
-        .filter-group select { padding:8px 10px; border:2px solid #ddd; border-radius:5px; background-color:white; cursor:pointer; font-size:12px; min-width:120px; max-width:150px; box-sizing:border-box; }
-        .filter-group select:focus { outline:none; border-color:rgb(8,57,64); }
-        .apply-filters-btn { padding:8px 15px; background-color:rgb(8,57,64); color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold; transition:all .3s ease; font-size:13px; white-space:nowrap; }
-        .reset-filters-btn { padding:8px 15px; background-color:#6c757d; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold; transition:all .3s ease; font-size:13px; white-space:nowrap; }
-        .content-body { display:flex; gap:15px; min-height:0; }
-        .centre { flex:1; background-color:white; border-radius:8px; padding:15px; box-shadow:0 2px 5px rgba(0,0,0,0.1); overflow-y:auto; min-width:0; }
-        .notes-table { width:100%; border-collapse:collapse; margin-top:20px; box-shadow:0 2px 5px rgba(0,0,0,0.1); table-layout:fixed; }
-        .notes-table th, .notes-table td { border:1px solid #ddd; padding:10px; text-align:left; word-wrap:break-word; overflow:hidden; text-overflow:ellipsis; }
-        .notes-table th:first-child, .notes-table td:first-child { width:50px; }
-        .notes-table th:nth-child(2), .notes-table td:nth-child(2) { width:45%; }
-        .notes-table th:nth-child(3), .notes-table td:nth-child(3) { width:45%; }
-        .notes-table th { background-color:rgb(8,57,64); color:white; font-weight:bold; font-size:14px; }
-        .notes-table tr:nth-child(even) { background-color:#f2f2f2; }
-        .notes-table tr:hover { background-color:#e6f7ff; cursor:pointer; }
-        .droite { width:300px; background:linear-gradient(135deg,#f8f9fa,#e0e7ff); border-radius:12px; padding:10px; box-shadow:0 4px 10px rgba(0,0,0,0.15); display:flex; flex-direction:column; align-items:center; }
-        .student-photo { width:100px; height:100px; border-radius:50%; object-fit:cover; border:4px solid rgb(8,57,64); margin:0 auto 10px; display:block; }
-        .student-name { color:rgb(8,57,64); text-align:center; margin-bottom:6px; font-weight:bold; font-size:15px; }
-        .student-class { color:rgb(243,117,33); font-weight:bold; text-align:center; font-size:15px; margin-bottom:10px; }
-        .toggle { display:flex; align-items:center; justify-content:space-between; width:100%; padding:6px 8px; background:rgba(8,57,64,.05); border-radius:5px; margin-bottom:10px; }
-        .update-note-btn { padding:8px 12px; background-color:rgb(8,57,64); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:700; width:100%; }
-        .selected-row { background-color:#b3d9ff !important; border-left:4px solid rgb(8,57,64); }
-        .no-selection { text-align:center; color:#666; }
-        @media (max-width: 980px){ .content-body { flex-direction:column; } .droite { width:100%; } }
+        :root{
+          --ink:#083940; --muted:#475569; --line:#e5e7eb; --ring:#93c5fd;
+        }
+
+        /* ===== Page gradient (cohérent avec Absence / Notes) ===== */
+        .wrap{
+          min-height:100vh;
+          padding:28px 18px;
+          background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 50%, #f97316 100%);
+        }
+
+        .section-title{
+          color:#fff; text-align:center; font-size: clamp(22px, 2.2vw, 30px);
+          font-weight:900; letter-spacing:.3px; margin-bottom:16px;
+          text-shadow:0 2px 10px rgba(0,0,0,.25);
+        }
+
+        /* ===== Filtres (glass) ===== */
+        .filters-container{
+          width:min(1100px, 100%);
+          margin:0 auto 14px;
+          background: rgba(255,255,255,.92);
+          backdrop-filter: blur(8px);
+          border:1px solid rgba(255,255,255,.7);
+          border-radius:16px;
+          box-shadow:0 12px 30px rgba(2,6,23,.16);
+          padding:12px;
+        }
+        .filters-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+        .filter-group{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+        .filter-group label{ font-weight:900; color:var(--ink); min-width:60px; font-size:14px; }
+        .filter-group select{
+          padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:#fff; font-size:13px;
+          outline:none; transition:border-color .15s, box-shadow .15s;
+          min-width:140px;
+        }
+        .filter-group select:focus{ border-color:var(--ring); box-shadow:0 0 0 4px rgba(147,197,253,.30); }
+
+        .apply-filters-btn, .reset-filters-btn{
+          padding:10px 14px; border:0; border-radius:12px; font-weight:900; cursor:pointer; white-space:nowrap;
+          box-shadow:0 10px 22px rgba(2,6,23,.18); transition: transform .08s ease, filter .12s ease, box-shadow .2s ease;
+          color:#fff;
+        }
+        .apply-filters-btn{ background: linear-gradient(135deg,#22c55e,#16a34a); }
+        .reset-filters-btn{ background: linear-gradient(135deg,#0ea5e9,#0284c7); }
+        .apply-filters-btn:hover, .reset-filters-btn:hover{ transform: translateY(-1px); filter:brightness(1.04); }
+
+        /* ===== Corps (table + panneau droit) ===== */
+        .content-body{
+          width:min(1100px, 100%);
+          margin:0 auto;
+          display:flex; gap:16px;
+        }
+        @media (max-width:980px){ .content-body{ flex-direction:column; } }
+
+        .centre{
+          flex:1;
+          background: rgba(255,255,255,.92);
+          backdrop-filter: blur(8px);
+          border:1px solid rgba(255,255,255,.7);
+          border-radius:16px;
+          box-shadow:0 12px 30px rgba(2,6,23,.16);
+          padding:14px; min-width:0;
+        }
+
+        table.notes-table{ width:100%; border-collapse:collapse; margin-top:6px; table-layout:fixed; }
+        .notes-table th, .notes-table td{ border:1px solid var(--line); padding:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .notes-table th{ background:#083940; color:#fff; font-size:14px; text-align:left; }
+        .notes-table tr:nth-child(even){ background:#f8fafc; }
+        .notes-table tr:hover{ background:#eef2ff; cursor:pointer; }
+        .selected-row{ background:rgba(8,57,64,.10) !important; border-left:4px solid #083940; }
+
+        .droite{
+          width:320px;
+          background: rgba(255,255,255,.92);
+          backdrop-filter: blur(8px);
+          border:1px solid rgba(255,255,255,.7);
+          border-radius:16px;
+          box-shadow:0 12px 30px rgba(2,6,23,.16);
+          padding:14px;
+          display:flex; flex-direction:column; align-items:center; gap:8px;
+        }
+        @media (max-width:980px){ .droite{ width:100%; } }
+
+        .student-photo{ width:110px; height:110px; border-radius:50%; object-fit:cover; border:4px solid #0ea5e9; box-shadow:0 8px 22px rgba(2,6,23,.15); }
+        .student-name{ color:#0f172a; font-weight:900; }
+        .student-class{ color:#f97316; font-weight:900; }
+
+        .toggle{
+          display:flex; align-items:center; justify-content:space-between; width:100%;
+          padding:8px 10px; background:rgba(2,6,23,.04); border-radius:12px; margin:6px 0 8px;
+        }
+
+        .update-note-btn{
+          padding:10px 12px; border:0; border-radius:12px; font-weight:900; cursor:pointer; width:100%;
+          background: linear-gradient(135deg,#22c55e,#16a34a); color:#fff;
+          box-shadow:0 10px 24px rgba(2,6,23,.18);
+        }
+        .update-note-btn:disabled{ opacity:.6; cursor:not-allowed; box-shadow:none; }
+
+        .no-selection{ text-align:center; color:#475569; }
+
+        /* Boutons génériques utilisés par SweetAlert (déjà présents dans tes autres pages) */
+        .btn{ padding:10px 14px; border:0; border-radius:12px; font-weight:900; cursor:pointer; }
+        .gradSave{ background: linear-gradient(135deg,#22c55e,#16a34a); color:#fff; }
       `}</style>
 
-      <h2 className="section-title">Consultation des Notes - {cap(cycle)} {sub}</h2>
+      <h2 className="section-title">📚 Consultation des Notes — {cap(cycle)} {sub}</h2>
 
       {/* Filtres */}
       <div className="filters-container">
         <div className="filters-row">
           <div className="filter-group">
-            <label>Matière :</label>
+            <label>📘 Matière :</label>
             <select
               value={selectedMatiere}
               onChange={(e) => setSelectedMatiere(e.target.value)}
@@ -287,7 +364,7 @@ export default function NotesArchive() {
               ))}
             </select>
 
-            <label>Trimestre :</label>
+            <label>🗓️ Trimestre :</label>
             <select
               value={selectedTrimestre}
               onChange={(e) => setSelectedTrimestre(e.target.value)}
@@ -298,20 +375,20 @@ export default function NotesArchive() {
               <option value="3eme trimestre">3ème Trimestre</option>
             </select>
 
-            <label>Type :</label>
+            <label>🏷️ Type :</label>
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
             >
-              <option value="tout">Tout (les deux)</option>
               <option value="Note Journalière">Note Journalière</option>
               <option value="Note Examen">Note Examen</option>
+              <option value="tout">Tout (les deux)</option>
             </select>
           </div>
 
-          <button className="apply-filters-btn" onClick={onAfficher}>Afficher les notes</button>
-          <button className="reset-filters-btn" onClick={resetAll}>Réinitialiser</button>
-          <button className="reset-filters-btn" onClick={() => navigate(`/dashboard/notes/${cycle}/${sub}`)}>Retour</button>
+          <button className="apply-filters-btn" onClick={onAfficher}>👀 Afficher</button>
+          <button className="reset-filters-btn" onClick={resetAll}>♻️ Réinitialiser</button>
+          <button className="reset-filters-btn" onClick={() => navigate(`/dashboard/notes/${cycle}/${sub}`)}>↩️ Retour</button>
         </div>
       </div>
 
@@ -358,17 +435,17 @@ export default function NotesArchive() {
                 alt="Élève"
                 onError={(e) => (e.currentTarget.src = DEFAULT_STUDENT)}
               />
-              <div className="student-name">{selectedEleve.nom} {selectedEleve.prenom}</div>
-              <div className="student-class">{cap(cycle)} {sub}</div>
+              <div className="student-name">👤 {selectedEleve.nom} {selectedEleve.prenom}</div>
+              <div className="student-class">🏫 {cap(cycle)} {sub}</div>
 
               {selectedMatiereNom && (
                 <p style={{ textAlign: "center", color: "rgb(8,57,64)", fontSize: 13, marginBottom: 5 }}>
-                  <strong>Matière :</strong> {selectedMatiereNom}
+                  <strong>📘 Matière :</strong> {selectedMatiereNom}
                 </p>
               )}
               {selectedTrimestre && (
                 <p style={{ textAlign: "center", color: "rgb(8,57,64)", fontSize: 13, marginBottom: 10 }}>
-                  <strong>Trimestre :</strong> {selectedTrimestre}
+                  <strong>🗓️ Trimestre :</strong> {selectedTrimestre}
                 </p>
               )}
 
@@ -381,7 +458,7 @@ export default function NotesArchive() {
                 <>
                   <div className="toggle">
                     <span className="modify-label" style={{ fontSize: 12, fontWeight: 800, color: "rgb(8,57,64)", textTransform: "uppercase" }}>
-                      Modifier :
+                      ✏️ Modifier :
                     </span>
                     <input
                       type="checkbox"
@@ -426,13 +503,21 @@ export default function NotesArchive() {
                       onClick={handleUpdateNote}
                       disabled={!isEditing}
                     >
-                      Enregistrer
+                      💾 Enregistrer
                     </button>
                   </div>
                 </>
               ) : (
                 <div className="no-selection">Sélectionnez une matière et un type pour éditer la note, ou “Tout” pour le radar.</div>
               )}
+
+              <button
+                className="reset-filters-btn"
+                style={{ marginTop: 10 }}
+                onClick={() => navigate(`/dashboard/notes/${cycle}/${sub}`)}
+              >
+                ↩️ Retour
+              </button>
             </>
           ) : (
             <div className="no-selection">Cliquez sur un élève pour afficher ses détails</div>
