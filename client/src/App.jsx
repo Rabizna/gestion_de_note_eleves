@@ -17,6 +17,7 @@ import Matricule from "./pages/contents/Matricule";
 import Absence from "./pages/contents/Absence";
 import AbsenceArchive from "./pages/contents/AbsenceArchive";
 import Notes from "./pages/contents/Notes";
+import NotesArchive from "./pages/contents/NotesArchive";
 import Bulletin from "./pages/contents/Bulletin";
 import Coefficients from "./pages/contents/Coefficients";
 
@@ -70,7 +71,7 @@ export default function App() {
 
         <Route path="notes/:cycle" element={<Notes />} />
         <Route path="notes/:cycle/:sub" element={<Notes />} />
-
+        <Route path="notes/archive/:cycle/:sub" element={<NotesArchive />} />
 
         <Route path="bulletin" element={<Bulletin />} />
       </Route>
