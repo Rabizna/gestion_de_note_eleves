@@ -1,4 +1,4 @@
-//server/src/app.js
+// server/src/app.js
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -14,6 +14,7 @@ import absenceRouter from "./routes/absence.routes.js";
 import matiereRoutes from "./routes/matiere.routes.js";
 import coefficientsRoutes from "./routes/coefficients.routes.js";
 import noteRoutes from "./routes/note.routes.js";
+import matriculeRoutes from "./routes/matricule.routes.js";
 
 export const app = express();
 
@@ -28,8 +29,11 @@ app.use(
   })
 );
 
-// petit log
-app.use((req, _res, next) => { console.log(req.method, req.path); next(); });
+// Petit log
+app.use((req, _res, next) => {
+  console.log(req.method, req.path);
+  next();
+});
 
 // ---------- Static /uploads (IMPORTANT: dossier réel "Uploads") ----------
 const __filename = fileURLToPath(import.meta.url);
@@ -49,6 +53,8 @@ app.use(
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
 app.use("/api/matieres", matiereRoutes);
+
+// alias: /api/coeff et /api/coefficients pointent vers le même router
 app.use("/api/coeff", coefficientsRoutes);
 app.use("/api/coefficients", coefficientsRoutes);
 
@@ -63,7 +69,10 @@ app.use("/api/stats", statsRouter);
 // Notes (élèves/matières/insert)
 app.use("/api/notes", noteRoutes);
 
-// 404 JSON (à la fin)
+// Matricules
+app.use("/api/matricule", matriculeRoutes);
+
+// 404 JSON (à la fin, après toutes les routes /api/*)
 app.use("/api", (_req, res) =>
   res.status(404).json({ message: "Route API introuvable." })
 );

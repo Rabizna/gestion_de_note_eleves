@@ -74,56 +74,97 @@ export default function Matiere() {
   return (
     <>
       <style>{`
-        .wrap{ display:flex; flex-direction:column; gap:18px; }
+        /* ===== Page gradient & layout (scopé à cette page) ===== */
+        .wrap{
+          min-height: 100vh;
+          padding: 28px 18px;
+          background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 50%, #f97316 100%);
+          display: flex; flex-direction: column; align-items: center; gap: 18px;
+        }
         .title{
-          font-weight:800; font-size:32px; text-align:center;
-          color:rgb(8,57,64); margin-top:4px;
+          font-weight: 900;
+          font-size: clamp(22px, 2.4vw, 34px);
+          text-align: center;
+          color: #ffffff;
+          text-shadow: 0 2px 8px rgba(0,0,0,.25);
+          letter-spacing: .3px;
+          margin-top: 4px;
         }
 
+        /* ===== Cards in "glass" style ===== */
         .card{
-          background:#fff; border:1px solid #e5e7eb; border-radius:16px;
-          padding:18px; box-shadow:0 10px 30px rgba(2,6,23,.06);
+          width: 100%;
+          max-width: 1100px;
+          background: rgba(255,255,255,0.9);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          border: 1px solid rgba(255,255,255,0.7);
+          border-radius: 18px;
+          padding: 20px;
+          box-shadow: 0 12px 30px rgba(2,6,23,.16);
+          color: #0f172a;
         }
 
+        /* ===== Form ===== */
         .row{ display:flex; align-items:center; gap:14px; margin:12px 0; }
-        .label{ width:240px; font-weight:800; color:#0f172a; font-size:20px; }
-        .input{
-          flex:1; padding:12px 14px; border:1px solid #e2e8f0; border-radius:10px;
-          font-size:16px; transition:.15s;
+        .label{
+          width:240px; font-weight:800; color:#0f172a; font-size:18px;
         }
-        .input:focus{ outline:none; border-color:#93c5fd; box-shadow:0 0 0 3px rgba(147,197,253,.35); }
-        .invalid{ border-color:#dc2626 !important; box-shadow:0 0 0 3px rgba(220,38,38,.18); }
+        .input{
+          flex:1; padding:12px 14px; border:1px solid #e2e8f0; border-radius:12px;
+          font-size:16px; transition: .15s;
+          background: #ffffff;
+        }
+        .input:focus{
+          outline:none; border-color:#93c5fd;
+          box-shadow: 0 0 0 4px rgba(147,197,253,.35);
+        }
+        .invalid{ border-color:#dc2626 !important; box-shadow:0 0 0 4px rgba(220,38,38,.18); }
         .hint{ color:#475569; font-size:14px; margin-top:6px; }
 
+        /* ===== Buttons (gradients + hover/press) ===== */
         .actions{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:10px; }
         .btn{
-          padding:12px 16px; border:0; border-radius:10px; font-weight:800; cursor:pointer;
+          padding:12px 16px; border:0; border-radius:12px; font-weight:900; cursor:pointer;
           display:inline-flex; align-items:center; gap:10px; color:#fff;
-          box-shadow:0 8px 20px rgba(2,6,23,.12); transition: transform .06s ease;
+          box-shadow:0 10px 22px rgba(2,6,23,.16);
+          transform: translateY(0);
+          transition: transform .1s ease, box-shadow .12s ease, filter .12s ease, opacity .12s ease;
         }
-        .btn:active{ transform: translateY(1px); }
-
-        .btn-save{ background:linear-gradient(160deg,#0f766e,#063b3f); }
-        .btn-reset{ background:#64748b; }
-        .btn-coef{ background:linear-gradient(160deg,#a855f7,#7c3aed); } /* violet modern */
-        .btn-coef:hover, .btn-save:hover{ filter:brightness(1.06); }
-        .btn-reset:hover{ filter:brightness(0.98); }
+        .btn:hover{ transform: translateY(-1px); box-shadow:0 14px 26px rgba(2,6,23,.22); filter: brightness(1.03); }
+        .btn:active{ transform: translateY(0); }
         .btn:disabled{ opacity:.7; cursor:not-allowed; }
 
-        .panel-title{ font-size:26px; font-weight:800; color:#0f172a; margin-bottom:10px; }
-        .table{ width:100%; border-collapse:collapse; }
-        th, td{ padding:12px 10px; border-bottom:1px solid #e5e7eb; }
-        th{
-          background:rgb(8,57,64); color:#fff; text-align:left;
-          position:sticky; top:0; z-index:1;
+        .btn-save{
+          background: linear-gradient(135deg,#0ea5e9,#6366f1);
         }
-        tr:nth-child(even){ background:#f8fafc; }
+        .btn-reset{
+          background: linear-gradient(135deg,#64748b,#334155);
+        }
+        .btn-coef{
+          background: linear-gradient(135deg,#a855f7,#7c3aed);
+        }
+
+        /* ===== Table ===== */
+        .panel-title{ font-size:22px; font-weight:900; color:#0f172a; margin-bottom:10px; }
+        .table{ width:100%; border-collapse: separate; border-spacing:0; background:#fff; }
+        th, td{ padding:12px 10px; border-bottom:1px solid #eef2f7; }
+        th{
+          background: linear-gradient(135deg,#0f172a,#1f2937);
+          color:#fff; text-align:left;
+          position: sticky; top: 0; z-index: 1;
+          font-weight:900; letter-spacing:.25px; font-size:13px;
+        }
+        tr:nth-child(even) td{ background:#fafafa; }
+        tbody tr:hover td{ background:#eef2ff; }
         .id-col{ width:80px; text-align:center; }
 
+        /* ===== Monospace tip box ===== */
         .sql-hint{
-          margin-top:8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+          margin-top:8px;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
           background:#f8fafc; border:1px dashed #e5e7eb; color:#334155;
-          border-radius:10px; padding:10px; white-space:pre-wrap;
+          border-radius:12px; padding:10px; white-space:pre-wrap;
         }
       `}</style>
 
@@ -175,7 +216,6 @@ export default function Matiere() {
               type="button"
               className="btn btn-coef"
               onClick={() => {
-                // redirige si la route existe; sinon affiche une info
                 try { nav("/dashboard/coefficients"); }
                 catch {
                   Swal.fire("Info", "La page Coefficient arrive bientôt.", "info");

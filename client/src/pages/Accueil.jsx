@@ -213,18 +213,53 @@ export default function Accueil() {
     <>
       {/* ---------- CSS ---------- */}
       <style>{`
-        html, body, #root { margin: 0; padding: 0; width: 100%; height: 100%; }
-        body { font-family: Arial, sans-serif; display: flex; flex-direction: column; overflow: hidden; background: #fff; }
+        :root{
+          --brand: rgb(8,57,64);
+          --brand-900: rgb(7,48,54);
+          --brand-800: rgb(9,66,73);
+          --accent: rgb(243,117,33);
+          --accent-light: #ff8a3d;
+          --paper: #ffffff;
+          --paper-2: #fbfdff;
+          --danger: #d9534f;
+          --danger-dark: #c9302c;
+        }
 
-        /* HEADER */
+        html, body, #root { margin: 0; padding: 0; width: 100%; height: 100%; }
+
+        /* ==== BACKGROUND GLOBAL EN GRADIENT (couleurs conservées) ==== */
+        body {
+          font-family: Arial, sans-serif;
+          display: flex; flex-direction: column; overflow: hidden;
+          background:
+            radial-gradient(120% 160% at 0% 0%, rgba(8,57,64,.08) 0%, rgba(8,57,64,0) 60%),
+            linear-gradient(135deg, #ffffff 0%, #fdf7f2 60%, #ffffff 100%);
+          background-attachment: fixed;
+        }
+
+        /* HEADER (couleur identique avec un léger glow orange en overlay) */
         .header {
-          height: 64px; background-color: rgb(8, 57, 64);
+          height: 64px; background-color: var(--brand);
           display: flex; align-items: center; justify-content: space-between;
           font-size: 24px; font-weight: bold; padding: 0 12px;
+          position: relative; overflow: hidden;
         }
-        .title-box { margin-left: 10px; display: flex; align-items: center; background: #000; color: #fff; padding: 10px; border-radius: 5px; }
+        .header::after{
+          content:""; position:absolute; inset:0; pointer-events:none;
+          background:
+            radial-gradient(120% 180% at 100% 0%, rgba(243,117,33,.22) 0%, rgba(243,117,33,0) 60%);
+        }
+
+        .title-box {
+          margin-left: 10px; display: flex; align-items: center;
+          background: linear-gradient(135deg, #000000, #111827);
+          color: #fff; padding: 10px; border-radius: 5px;
+        }
         .text-left { color: #fff; font-size: 20px; margin-right: 10px; }
-        .box { background-color: rgb(243,117,33); padding: 5px 15px; font-size: 20px; }
+        .box {
+          background: linear-gradient(135deg, var(--accent), var(--accent-light));
+          padding: 5px 15px; font-size: 20px; color:#111827;
+        }
 
         .burger { display: none; background: transparent; border: 0; width: 40px; height: 40px; margin-right: 8px; cursor: pointer; }
         .burger:focus { outline: 2px solid #fff; outline-offset: 2px; }
@@ -241,31 +276,46 @@ export default function Accueil() {
 
         /* LAYOUT */
         .container { display: flex; width: 100vw; height: calc(100vh - 64px); position: relative; }
+
+        /* MENU (même couleur mais en gradient vertical discret) */
         .menu {
-          width: 250px; min-width: 250px; background-color: rgb(8, 57, 64);
-          padding: 10px; box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+          width: 250px; min-width: 250px;
+          background: linear-gradient(180deg, var(--brand) 0%, var(--brand-800) 50%, var(--brand-900) 100%);
+          padding: 10px; box-shadow: 2px 0 16px rgba(2,6,23,0.15);
           display: flex; flex-direction: column; justify-content: space-between; overflow-y: auto;
         }
         .menu-items { display: flex; flex-direction: column; gap: 15px; text-transform: uppercase; }
 
         .menu .menu-link {
-          display: block; padding: 10px; border-radius: 5px; text-decoration: none;
-          color: white; transition: background-color .3s ease, color .3s ease;
+          display: block; padding: 10px; border-radius: 8px; text-decoration: none;
+          color: white; transition: background .25s ease, color .25s ease, transform .08s ease;
         }
         .menu .menu-link:hover,
         .menu .menu-link.active {
-          background-color: rgb(243,117,33); color: black; font-weight: bold;
+          background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+          color: #111827; font-weight: bold;
+          transform: translateY(-1px);
         }
 
-        .content { flex: 1; min-width: 0; padding: 10px; background: #fff; overflow-y: auto; }
+        /* CONTENU (fond clair en très léger gradient, conserve le blanc) */
+        .content {
+          flex: 1; min-width: 0; padding: 10px; overflow-y: auto;
+          background:
+            linear-gradient(180deg, rgba(255,255,255,.98) 0%, rgba(255,255,255,.96) 100%),
+            radial-gradient(150% 120% at 100% 0%, rgba(243,117,33,.06) 0%, rgba(243,117,33,0) 60%);
+          background-blend-mode: normal, multiply;
+        }
 
         .logout-container { margin-top: auto; padding: 20px 0; text-align: center; }
         .logout-btn {
-          display: inline-block; padding: 10px 20px; background-color: #d9534f; color: white;
-          font-size: 16px; font-weight: bold; border-radius: 5px; transition: .3s ease; width: 80%;
+          display: inline-block; padding: 10px 20px;
+          background: linear-gradient(135deg, var(--danger) 0%, var(--danger-dark) 100%);
+          color: white; font-size: 16px; font-weight: bold; border-radius: 8px;
+          transition: transform .06s ease, filter .15s ease; width: 80%;
           text-align: center; border: none; cursor: pointer;
+          box-shadow: 0 10px 24px rgba(217,83,79,.25);
         }
-        .logout-btn:hover { background-color: #c9302c; transform: scale(1.05); }
+        .logout-btn:hover { filter: brightness(1.03); transform: translateY(-1px); }
 
         .backdrop { display: none; position: fixed; top: 64px; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.4); z-index: 15; }
 
@@ -276,7 +326,8 @@ export default function Accueil() {
         .user-panel {
           position: fixed; top: 70px; right: 12px; z-index: 99;
           width: 340px; max-width: calc(100vw - 24px);
-          background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+          background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+          border: 1px solid #e5e7eb; border-radius: 12px;
           box-shadow: 0 18px 48px rgba(2,6,23,.25);
           padding: 14px 14px 12px;
 
@@ -297,7 +348,6 @@ export default function Accueil() {
         input:checked + .slider { background: #2563eb; }
         input:checked + .slider::before { transform: translateX(20px); }
 
-        /* Contenu du panneau (vertical) */
         .up-head { display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; margin-top: 8px; }
         .up-avatar { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb; }
 
@@ -317,23 +367,27 @@ export default function Accueil() {
         .file-col { display:flex; flex-direction:column; gap:6px; min-width:0; }
         .file-name { max-width: 200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#475569; font-size:12px; text-align: left; }
 
-        /* ---------- Actions du popup ---------- */
         .up-actions { margin-top: auto; }
 
-        /* Boutons SCOPÉS au popup (évite les collisions avec d'autres pages) */
         .user-panel .up-btn{
           padding:10px 14px; border:0; border-radius:10px; font-weight:700;
           cursor:pointer; display:inline-flex; align-items:center; gap:6px;
         }
         .user-panel .up-btn:disabled{ opacity:.6; cursor:not-allowed; }
 
-        /* variantes */
-        .user-panel .up-btn-edit{ background:linear-gradient(160deg,#2563eb,#1d4ed8) !important; color:#fff; }
-        .user-panel .up-btn-cancel{ background:#f1f5f9 !important; color:#0f172a; }
-        .user-panel .up-btn-green{ background:#16a34a !important; color:#fff; }  /* vert */
-        .user-panel .up-btn-pink{  background:#ec4899 !important; color:#fff; }  /* rose */
+        .user-panel .up-btn-edit{
+          background: linear-gradient(135deg,#2563eb,#1d4ed8) !important; color:#fff;
+        }
+        .user-panel .up-btn-cancel{
+          background: linear-gradient(135deg,#f8fafc,#e2e8f0) !important; color:#0f172a;
+        }
+        .user-panel .up-btn-green{
+          background: linear-gradient(135deg,#16a34a,#15803d) !important; color:#fff;
+        }
+        .user-panel .up-btn-pink{
+          background: linear-gradient(135deg,#ec4899,#db2777) !important; color:#fff;
+        }
 
-        /* Triple barre (Matière | Matricule | Modifier) */
         .up-triple{
           width:100%;
           display:grid;

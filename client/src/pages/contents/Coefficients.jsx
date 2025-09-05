@@ -235,60 +235,101 @@ export default function Coefficients() {
     <>
       <style>{`
         :root{
-          --ink:#083940; --accent:#f37521; --muted:#6b7280; --card:#fff;
+          --ink:#083940; --accent:#f97316; --muted:#6b7280;
           --line:#e5e7eb; --ring:#93c5fd; --head:#0b3b40;
         }
-        .wrap { display:flex; flex-direction:column; gap:18px; }
-        .title { font-size:32px; font-weight:800; color:var(--head); text-align:center; margin:6px 0 8px; letter-spacing:.2px; }
-        .card { background:var(--card); border:1px solid #eef2f7; border-radius:14px; box-shadow:0 10px 30px rgba(2,6,23,.06); padding:16px; }
-        .row { display:grid; grid-template-columns: 160px 1fr; gap:12px; align-items:center; margin:8px 0; }
-        .label { font-weight:800; color:var(--ink); }
-        .control { display:flex; gap:12px; }
-        .select, .input {
-          width:100%; padding:12px 12px; border:1px solid var(--line); border-radius:10px; background:#f8fafc; font-size:14px;
-          transition:border-color .15s, box-shadow .15s; outline:none;
+
+        /* ===== Page gradient & layout (scopé) ===== */
+        .wrap{
+          min-height:100vh;
+          padding:28px 18px;
+          background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 50%, #f97316 100%);
+          display:flex; flex-direction:column; align-items:center; gap:18px;
         }
-        .select:focus, .input:focus { border-color:var(--ring); box-shadow:0 0 0 3px rgba(147,197,253,.35); }
-        .inline { display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:14px; }
-        .hint { font-size:12.5px; color:#475569; margin-top:6px; }
-        .actions { margin-top:12px; display:flex; gap:10px; }
+        .title{
+          font-size: clamp(22px, 2.4vw, 34px);
+          font-weight: 900;
+          color:#ffffff;
+          text-align:center;
+          margin:6px 0 8px;
+          letter-spacing:.3px;
+          text-shadow:0 2px 10px rgba(0,0,0,.25);
+        }
 
-        /* Boutons en linear-gradient + emojis */
-        .btn { padding:10px 14px; border:0; border-radius:12px; font-weight:900; cursor:pointer; letter-spacing:.2px;
-               box-shadow:0 8px 22px rgba(15,23,42,.15); transition: transform .04s, filter .15s, box-shadow .2s; }
-        .btn:active{ transform: translateY(1px); }
+        /* ===== Cards "glass" ===== */
+        .card{
+          width:100%;
+          max-width:1100px;
+          background: rgba(255,255,255,0.9);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          border: 1px solid rgba(255,255,255,0.7);
+          border-radius: 18px;
+          box-shadow: 0 12px 30px rgba(2,6,23,.16);
+          padding: 16px 18px;
+          color:#0f172a;
+        }
 
-        /* Enregistrer : vert */
-        .btn-primary{
-          background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        /* ===== Form ===== */
+        .row{ display:grid; grid-template-columns: 160px 1fr; gap:12px; align-items:center; margin:10px 0; }
+        .label{ font-weight:800; color:var(--ink); }
+        .control{ display:flex; gap:12px; flex-wrap:wrap; }
+
+        .select, .input{
+          width:100%; padding:12px 12px; border:1px solid var(--line); border-radius:12px;
+          background:#ffffff; font-size:14px;
+          transition:border-color .15s, box-shadow .15s, transform .06s ease;
+          outline:none;
+        }
+        .select:focus, .input:focus{
+          border-color:var(--ring);
+          box-shadow:0 0 0 4px rgba(147,197,253,.35);
+        }
+
+        .inline{ display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:14px; }
+        .hint{ font-size:13px; color:#475569; margin-top:6px; }
+
+        /* ===== Buttons (gradients + hover/press) ===== */
+        .actions{ margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; }
+        .btn{
+          padding:10px 14px; border:0; border-radius:12px; font-weight:900; cursor:pointer; letter-spacing:.2px;
+          box-shadow:0 8px 22px rgba(15,23,42,.15);
+          transition: transform .08s ease, filter .15s ease, box-shadow .2s ease, opacity .15s ease;
           color:#fff;
         }
-        .btn-primary:hover{ filter: brightness(1.04); box-shadow:0 12px 28px rgba(34,197,94,.35); }
-        .btn-primary:disabled{ opacity:.6; cursor:not-allowed; box-shadow:none; }
+        .btn:hover{ transform: translateY(-1px); filter: brightness(1.03); box-shadow:0 12px 26px rgba(15,23,42,.22); }
+        .btn:active{ transform: translateY(0); }
+        .btn:disabled{ opacity:.6; cursor:not-allowed; box-shadow:none; }
 
-        /* Réinitialiser : gris bleuté */
+        .btn-primary{
+          background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        }
         .btn-secondary{
           background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
           color:#0f172a;
         }
-        .btn-secondary:hover{ filter: brightness(1.03); }
-
-        /* Lien Matière : turquoise */
         .btn-link{
           background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-          color:#fff;
         }
-        .btn-link:hover{ filter: brightness(1.04); }
 
-        .table { width:100%; border-collapse: collapse; }
-        .th, .td { border:1px solid var(--line); padding:10px 10px; font-size:14px; }
-        .th { background:var(--ink); color:#fff; text-align:left; }
-        .td.center { text-align:center; }
-        .dash { color:#94a3b8; }
+        /* ===== Table ===== */
+        .table{ width:100%; border-collapse:separate; border-spacing:0; background:#fff; border-radius:12px; overflow:hidden; }
+        .th, .td{ border-bottom:1px solid var(--line); padding:12px 10px; font-size:14px; }
+        .th{
+          position:sticky; top:0; z-index:1;
+          background: linear-gradient(135deg, #0f172a, #1f2937);
+          color:#fff; text-align:left;
+          font-weight:900; letter-spacing:.25px; font-size:13px;
+        }
+        .td.center{ text-align:center; }
+        tbody tr:nth-child(even) .td{ background:#fafafa; }
+        tbody tr:hover .td{ background:#eef2ff; }
+        .dash{ color:#94a3b8; }
 
+        /* ===== Responsive ===== */
         @media (max-width: 900px){
-          .inline { grid-template-columns: 1fr; }
-          .row { grid-template-columns: 1fr; }
+          .inline{ grid-template-columns: 1fr; }
+          .row{ grid-template-columns: 1fr; }
         }
       `}</style>
 

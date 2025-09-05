@@ -9,7 +9,7 @@ export async function listMatieres(_req, res) {
   try {
     const matieres = await prisma.matiere.findMany({
       select: { id: true, nom: true, code: true },
-      orderBy: { nom: "asc" },
+      orderBy: { id: "asc" },
     });
     res.json({ matieres });
   } catch (e) {

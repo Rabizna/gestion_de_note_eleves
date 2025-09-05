@@ -59,7 +59,7 @@ model Eleve {
 
   telephone String? @unique @db.VarChar(20)
   numero    Int?
-  matricule Int?
+  matricule Int? @unique
 
   niveauId  Int?     @map("id_niveau")
   sectionId Int?     @map("id_section")
