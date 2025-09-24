@@ -487,7 +487,7 @@ function PremiereTerminalView() {
                 <option key={e.id} value={e.id}>{e.id} — {e.nom} {e.prenom}</option>
               ))}
             </select>
-            <button className="btn btn-primary" onClick={onSelect}>🔎 Sélectionner</button>
+            <button className="btn btn-primary"  onClick={onSelect} style={{width: 100}}>🔎 Sélectionner</button>
           </div>
 
           <div className="row"><span className="lbl">Nom:</span><span className="read">{cur?.nom || "-"}</span></div>

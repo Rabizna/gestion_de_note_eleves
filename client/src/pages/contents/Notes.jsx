@@ -387,7 +387,7 @@ function NoteForm({ cycle, sub }) {
       </div>
 
       <div className="btns">
-        <button className="btn gradSave"  onClick={save}>💾 Enregistrer</button>
+        <button className="btn gradSave"  onClick={save} style={{ background: 'linear-gradient(135deg,#22c55e 0%, #16a34a 50%, #14532d 100%)' }}>💾 Enregistrer</button>
         <button className="btn gradReset" onClick={resetForm}>🔄 Actualiser</button>
         <button className="btn gradQuit" onClick={()=>navigate("/dashboard") }>🏠 Quitter</button>
       </div>

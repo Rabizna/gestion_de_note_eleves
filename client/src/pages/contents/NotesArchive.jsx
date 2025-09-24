@@ -251,15 +251,37 @@ export default function NotesArchive() {
         }
 
         .section-title{
-          color:#fff; text-align:center; font-size: clamp(22px, 2.2vw, 30px);
+          color:black; text-align:center; font-size: clamp(22px, 2.2vw, 30px);
           font-weight:900; letter-spacing:.3px; margin-bottom:16px;
           text-shadow:0 2px 10px rgba(0,0,0,.25);
         }
 
-        /* ===== Filtres (glass) ===== */
-        .filters-container{
+        /* ===== Layout principal en grille (garde le thème) ===== */
+        .content-body{
           width:min(1100px, 100%);
-          margin:0 auto 14px;
+          margin:0 auto;
+          display:grid;
+          grid-template-columns: 1fr 320px; /* centre + panneau droit fixe */
+          gap:16px;
+        }
+        @media (max-width:980px){
+          .content-body{ grid-template-columns: 1fr; }
+        }
+
+        /* ===== Colonne Centre ===== */
+        .centre{
+          min-width:0;
+          background: rgba(255,255,255,.92);
+          backdrop-filter: blur(8px);
+          border:1px solid rgba(255,255,255,.7);
+          border-radius:16px;
+          box-shadow:0 12px 30px rgba(2,6,23,.16);
+          padding:14px;
+        }
+
+        /* ===== Filtres déplacés dans .centre ===== */
+        .filters-container{
+          margin:0 0 14px 0; /* maintenant interne à .centre */
           background: rgba(255,255,255,.92);
           backdrop-filter: blur(8px);
           border:1px solid rgba(255,255,255,.7);
@@ -267,15 +289,39 @@ export default function NotesArchive() {
           box-shadow:0 12px 30px rgba(2,6,23,.16);
           padding:12px;
         }
-        .filters-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-        .filter-group{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-        .filter-group label{ font-weight:900; color:var(--ink); min-width:60px; font-size:14px; }
+
+        /* Empilement ligne par ligne */
+        .filters-row{
+          display:flex;
+          flex-direction:column;  /* <-- empile toutes les sections des filtres */
+          align-items:stretch;
+          gap:10px;
+        }
+
+        .filter-group{
+          display:flex;
+          flex-wrap:wrap;
+          gap:8px;
+          align-items:center;
+        }
+
+        .filter-group label{
+          font-weight:900; color:var(--ink); min-width:60px; font-size:14px;
+        }
+
         .filter-group select{
           padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:#fff; font-size:13px;
           outline:none; transition:border-color .15s, box-shadow .15s;
-          min-width:140px;
+          min-width:180px;
         }
         .filter-group select:focus{ border-color:var(--ring); box-shadow:0 0 0 4px rgba(147,197,253,.30); }
+
+        /* Actions des filtres (gardées) */
+        .filters-actions{
+          display:flex;
+          gap:10px;
+          flex-wrap:wrap;
+        }
 
         .apply-filters-btn, .reset-filters-btn{
           padding:10px 14px; border:0; border-radius:12px; font-weight:900; cursor:pointer; white-space:nowrap;
@@ -286,24 +332,7 @@ export default function NotesArchive() {
         .reset-filters-btn{ background: linear-gradient(135deg,#0ea5e9,#0284c7); }
         .apply-filters-btn:hover, .reset-filters-btn:hover{ transform: translateY(-1px); filter:brightness(1.04); }
 
-        /* ===== Corps (table + panneau droit) ===== */
-        .content-body{
-          width:min(1100px, 100%);
-          margin:0 auto;
-          display:flex; gap:16px;
-        }
-        @media (max-width:980px){ .content-body{ flex-direction:column; } }
-
-        .centre{
-          flex:1;
-          background: rgba(255,255,255,.92);
-          backdrop-filter: blur(8px);
-          border:1px solid rgba(255,255,255,.7);
-          border-radius:16px;
-          box-shadow:0 12px 30px rgba(2,6,23,.16);
-          padding:14px; min-width:0;
-        }
-
+        /* ===== Tableau ===== */
         table.notes-table{ width:100%; border-collapse:collapse; margin-top:6px; table-layout:fixed; }
         .notes-table th, .notes-table td{ border:1px solid var(--line); padding:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .notes-table th{ background:#083940; color:#fff; font-size:14px; text-align:left; }
@@ -311,6 +340,7 @@ export default function NotesArchive() {
         .notes-table tr:hover{ background:#eef2ff; cursor:pointer; }
         .selected-row{ background:rgba(8,57,64,.10) !important; border-left:4px solid #083940; }
 
+        /* ===== Panneau droit "fixe" (hauteur 100% wrap, pas de scroll) ===== */
         .droite{
           width:320px;
           background: rgba(255,255,255,.92);
@@ -320,12 +350,24 @@ export default function NotesArchive() {
           box-shadow:0 12px 30px rgba(2,6,23,.16);
           padding:14px;
           display:flex; flex-direction:column; align-items:center; gap:8px;
+
+          position: sticky;          /* reste visible au scroll */
+          top: 28px;                 /* aligne avec le padding top de .wrap */
+          height: calc(100vh - 56px);/* 100% de la hauteur visible de wrap (28px haut + 28px bas) */
+          overflow: hidden;          /* pas de scroll interne */
         }
-        @media (max-width:980px){ .droite{ width:100%; } }
+        @media (max-width:980px){
+          .droite{
+            position: static; /* sur mobile on laisse le flux normal */
+            width:100%;
+            height:auto;
+            overflow:visible;
+          }
+        }
 
         .student-photo{ width:110px; height:110px; border-radius:50%; object-fit:cover; border:4px solid #0ea5e9; box-shadow:0 8px 22px rgba(2,6,23,.15); }
-        .student-name{ color:#0f172a; font-weight:900; }
-        .student-class{ color:#f97316; font-weight:900; }
+        .student-name{ color:#0f172a; font-weight:900; text-align:center; }
+        .student-class{ color:#f97316; font-weight:900; text-align:center; }
 
         .toggle{
           display:flex; align-items:center; justify-content:space-between; width:100%;
@@ -346,56 +388,64 @@ export default function NotesArchive() {
         .gradSave{ background: linear-gradient(135deg,#22c55e,#16a34a); color:#fff; }
       `}</style>
 
-      <h2 className="section-title">📚 Consultation des Notes — {cap(cycle)} {sub}</h2>
-
-      {/* Filtres */}
-      <div className="filters-container">
-        <div className="filters-row">
-          <div className="filter-group">
-            <label>📘 Matière :</label>
-            <select
-              value={selectedMatiere}
-              onChange={(e) => setSelectedMatiere(e.target.value)}
-            >
-              <option value="">-- Sélectionner une matière --</option>
-              <option value="tout">Tout</option>
-              {matieres.map((m) => (
-                <option key={m.id} value={m.id}>{m.nom}</option>
-              ))}
-            </select>
-
-            <label>🗓️ Trimestre :</label>
-            <select
-              value={selectedTrimestre}
-              onChange={(e) => setSelectedTrimestre(e.target.value)}
-            >
-              <option value="">-- Sélectionner un trimestre --</option>
-              <option value="1er trimestre">1er Trimestre</option>
-              <option value="2eme trimestre">2ème Trimestre</option>
-              <option value="3eme trimestre">3ème Trimestre</option>
-            </select>
-
-            <label>🏷️ Type :</label>
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-            >
-              <option value="Note Journalière">Note Journalière</option>
-              <option value="Note Examen">Note Examen</option>
-              <option value="tout">Tout (les deux)</option>
-            </select>
-          </div>
-
-          <button className="apply-filters-btn" onClick={onAfficher}>👀 Afficher</button>
-          <button className="reset-filters-btn" onClick={resetAll}>♻️ Réinitialiser</button>
-          <button className="reset-filters-btn" onClick={() => navigate(`/dashboard/notes/${cycle}/${sub}`)}>↩️ Retour</button>
-        </div>
-      </div>
-
       {/* Corps */}
       <div className="content-body">
-        {/* Liste élèves */}
+        {/* Colonne gauche : Titre + Filtres + Liste élèves */}
         <div className="centre">
+          {/* === Titre déplacé dans .centre === */}
+          <h2 className="section-title">📚 Consultation des Notes — {cap(cycle)} {sub}</h2>
+
+          {/* === Filtres (déjà dans .centre) === */}
+          <div className="filters-container">
+            <div className="filters-row">
+              <div className="filter-group">
+                <label>📘 Matière :</label>
+                <select
+                  value={selectedMatiere}
+                  onChange={(e) => setSelectedMatiere(e.target.value)}
+                >
+                  <option value="">-- Sélectionner une matière --</option>
+                  <option value="tout">Tout</option>
+                  {matieres.map((m) => (
+                    <option key={m.id} value={m.id}>{m.nom}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="filter-group">
+                <label>🗓️ Trimestre :</label>
+                <select
+                  value={selectedTrimestre}
+                  onChange={(e) => setSelectedTrimestre(e.target.value)}
+                >
+                  <option value="">-- Sélectionner un trimestre --</option>
+                  <option value="1er trimestre">1er Trimestre</option>
+                  <option value="2eme trimestre">2ème Trimestre</option>
+                  <option value="3eme trimestre">3ème Trimestre</option>
+                </select>
+              </div>
+
+              <div className="filter-group">
+                <label>🏷️ Type :</label>
+                <select
+                  value={selectedType}
+                  onChange={(e) => setSelectedType(e.target.value)}
+                >
+                  <option value="Note Journalière">Note Journalière</option>
+                  <option value="Note Examen">Note Examen</option>
+                  <option value="tout">Tout (les deux)</option>
+                </select>
+              </div>
+
+              <div className="filters-actions">
+                <button className="apply-filters-btn" onClick={onAfficher}>👀 Afficher</button>
+                <button className="reset-filters-btn" onClick={resetAll}>♻️ Réinitialiser</button>
+                <button className="reset-filters-btn" onClick={() => navigate(`/dashboard/notes/${cycle}/${sub}`)}>↩️ Retour</button>
+              </div>
+            </div>
+          </div>
+
+          {/* Liste élèves */}
           {eleves?.length ? (
             <table className="notes-table">
               <thead>
@@ -425,7 +475,7 @@ export default function NotesArchive() {
           )}
         </div>
 
-        {/* Panneau droit */}
+        {/* Panneau droit (hauteur 100% sans scroll) */}
         <div className="droite">
           {selectedEleve ? (
             <>
@@ -510,14 +560,6 @@ export default function NotesArchive() {
               ) : (
                 <div className="no-selection">Sélectionnez une matière et un type pour éditer la note, ou “Tout” pour le radar.</div>
               )}
-
-              <button
-                className="reset-filters-btn"
-                style={{ marginTop: 10 }}
-                onClick={() => navigate(`/dashboard/notes/${cycle}/${sub}`)}
-              >
-                ↩️ Retour
-              </button>
             </>
           ) : (
             <div className="no-selection">Cliquez sur un élève pour afficher ses détails</div>
