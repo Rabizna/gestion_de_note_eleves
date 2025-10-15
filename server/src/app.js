@@ -46,6 +46,8 @@ app.use(
   })
 );
 
+
+
 // Petit log
 app.use((req, _res, next) => {
   console.log(req.method, req.path);
@@ -90,6 +92,7 @@ app.use("/api/notes", noteRoutes);
 app.use("/api/matricule", matriculeRoutes);
 //Bulletin
 app.use("/api/bulletin", bulletinRoutes);
+
 
 // 404 JSON (à la fin, après toutes les routes /api/*)
 app.use("/api", (_req, res) =>

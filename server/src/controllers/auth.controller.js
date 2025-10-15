@@ -5,7 +5,7 @@ import { prisma } from "../prisma.js";
 import { Prisma } from "@prisma/client";
 
 const EMAIL_RE = /^\S+@\S+\.\S+$/;
-const COOKIE_NAME = "lycee3f_token"; // nom unique pour éviter les collisions
+const COOKIE_NAME = "lycee3f_token";
 const WEEK = 7 * 24 * 60 * 60 * 1000;
 
 function cookieOpts() {
@@ -33,6 +33,7 @@ function resolveRoleEnum(input) {
   return allowed.includes(wanted) ? wanted : null;
 }
 
+/** Sérialise l'utilisateur côté client (avec infos titularisation) */
 function publicUser(u) {
   if (!u) return null;
   return {
@@ -41,6 +42,14 @@ function publicUser(u) {
     email: u.email,
     role: u.role,
     profileImage: u.profileImage ?? null,
+
+    // Titularisation (ids + libellés si relations chargées)
+    titulaireNiveauId: u.titulaireNiveauId ?? null,
+    titulaireSectionId: u.titulaireSectionId ?? null,
+    titulaireNiveauNom:
+      u.titulaireNiveau?.nom ?? u.titulaireNiveau?.nom_niveau ?? null,
+    titulaireSectionNom:
+      u.titulaireSection?.nom ?? u.titulaireSection?.nom_section ?? null,
   };
 }
 
@@ -69,9 +78,8 @@ export async function register(req, res) {
     if (exists) return res.status(400).json({ message: "Cet email est déjà utilisé." });
 
     // Un seul proviseur
-    const proviseurEnum = resolveRoleEnum("proviseur");
-    if (roleEnum === proviseurEnum) {
-      const provCount = await prisma.user.count({ where: { role: proviseurEnum } });
+    if (roleEnum === "PROVISEUR") {
+      const provCount = await prisma.user.count({ where: { role: "PROVISEUR" } });
       if (provCount > 0) return res.status(400).json({ message: "Un proviseur existe déjà." });
     }
 
@@ -83,7 +91,9 @@ export async function register(req, res) {
         email,
         password,
         role: roleEnum,
-        profileImage: null, // côté client: fallback /uploads/defaut.png
+        profileImage: null,
+        titulaireNiveauId: null,
+        titulaireSectionId: null,
       },
     });
 
@@ -103,7 +113,10 @@ export async function login(req, res) {
       return res.status(400).json({ message: "Tous les champs sont obligatoires." });
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: { titulaireNiveau: true, titulaireSection: true },
+    });
     if (!user) return res.status(400).json({ message: "Email non trouvé." });
 
     const ok = await bcrypt.compare(pass, user.password);
@@ -126,7 +139,10 @@ export async function login(req, res) {
 /** GET /api/auth/me */
 export async function me(req, res) {
   try {
-    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: { titulaireNiveau: true, titulaireSection: true },
+    });
     if (!user) return res.status(404).json({ message: "Utilisateur introuvable." });
     return res.json({ user: publicUser(user) });
   } catch (e) {
@@ -146,16 +162,34 @@ export async function logout(_req, res) {
   }
 }
 
-/** PUT /api/auth/profile  (JSON OU multipart + n'importe quel nom de champ fichier) */
+/** Helpers parse */
+function parseNullableInt(v) {
+  if (v === undefined || v === null || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** PUT /api/auth/profile  (JSON OU multipart) */
 export async function updateProfile(req, res) {
   try {
     ensureEnv();
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ message: "Non autorisé." });
 
+    // Récupération utilisateur (avec role)
+    const current = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { titulaireNiveau: true, titulaireSection: true },
+    });
+    if (!current) return res.status(404).json({ message: "Utilisateur introuvable." });
+
     // Champs texte
     let fullName = req.body?.fullName ?? req.body?.name ?? null;
     let email = req.body?.email ?? null;
+
+    // Titularisation (accepté si role = PROFESSEUR)
+    let titulaireNiveauId = parseNullableInt(req.body?.titulaireNiveauId);
+    let titulaireSectionId = parseNullableInt(req.body?.titulaireSectionId);
 
     const data = {};
 
@@ -181,15 +215,75 @@ export async function updateProfile(req, res) {
       data.profileImage = `/uploads/${file.filename}`;
     }
 
+    // ====== Gestion TITULARISATION ======
+    const isProf = current.role === "PROFESSEUR";
+    const isProviseur = current.role === "PROVISEUR";
+
+    if (isProviseur) {
+      // Un proviseur ne peut pas être titulaire
+      data.titulaireNiveauId = null;
+      data.titulaireSectionId = null;
+    } else if (isProf) {
+      // Si l'un des deux est renseigné, exiger les deux
+      const oneFilled = titulaireNiveauId !== null || titulaireSectionId !== null;
+      const bothFilled = titulaireNiveauId !== null && titulaireSectionId !== null;
+
+      if (oneFilled && !bothFilled) {
+        return res
+          .status(400)
+          .json({ message: "Sélectionnez le niveau ET la section pour la titularisation." });
+      }
+
+      // Si none => on efface (nullable). Si both => vérifier unicité
+      if (!bothFilled) {
+        data.titulaireNiveauId = null;
+        data.titulaireSectionId = null;
+      } else {
+        // Vérifier que le couple n'est pas déjà attribué à quelqu'un d'autre
+        const conflict = await prisma.user.findFirst({
+          where: {
+            id: { not: userId },
+            titulaireNiveauId,
+            titulaireSectionId,
+          },
+          select: { id: true, fullName: true },
+        });
+        if (conflict) {
+          const who = conflict.fullName || "Un autre professeur";
+          return res.status(400).json({
+            message: `${who.toLocaleUpperCase()} est déjà titulaire de cette classe.`,
+          });
+        }
+
+        // Vérifier existence des clés étrangères (évite erreur 23503)
+        const [nivExists, secExists] = await Promise.all([
+          prisma.niveau.findUnique({ where: { id: titulaireNiveauId } }),
+          prisma.section.findUnique({ where: { id: titulaireSectionId } }),
+        ]);
+        if (!nivExists || !secExists) {
+          return res.status(400).json({ message: "Niveau/Section introuvable." });
+        }
+
+        data.titulaireNiveauId = titulaireNiveauId;
+        data.titulaireSectionId = titulaireSectionId;
+      }
+    }
+    // ====== fin titularisation ======
+
     if (Object.keys(data).length === 0) {
       return res.status(400).json({ message: "Aucun changement fourni." });
     }
 
-    const updated = await prisma.user.update({ where: { id: userId }, data });
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data,
+      include: { titulaireNiveau: true, titulaireSection: true },
+    });
 
     return res.json({ user: publicUser(updated) });
   } catch (e) {
-    if (e?.code === "P2002") {
+    // Email unique
+    if (e?.code === "P2002" && Array.isArray(e?.meta?.target) && e.meta.target.includes("email")) {
       return res.status(400).json({ message: "Cet email est déjà utilisé." });
     }
     console.error(e);

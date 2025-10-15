@@ -21,6 +21,18 @@ model User {
   role         Role
   profileImage String?
   createdAt    DateTime @default(now())
+
+  /// --- Attributs "titulaire" (Classe = Niveau + Section) ---
+  /// Toujours NULL pour PROVISEUR ; pour PROFESSEUR => indique sa classe de titularisation
+  titulaireNiveauId  Int?     @map("titulaire_niveau_id")
+  titulaireSectionId Int?     @map("titulaire_section_id")
+
+  /// Relations dédiées (avec noms explicites) + côté opposé dans Niveau/Section
+  titulaireNiveau  Niveau?  @relation("UserTitulaireNiveau", fields: [titulaireNiveauId], references: [id], onDelete: SetNull)
+  titulaireSection Section? @relation("UserTitulaireSection", fields: [titulaireSectionId], references: [id], onDelete: SetNull)
+
+  /// Un(e) seul(e) titulaire par (Niveau, Section) quand les deux sont non-NULL
+  @@unique([titulaireNiveauId, titulaireSectionId], name: "uq_user_titulaire_niveau_section")
 }
 
 model Eleve {
@@ -82,6 +94,9 @@ model Niveau {
   absences     Absence[]
   coefficients Coefficient[]
 
+  /// Côté opposé de la relation User.titulaireNiveau
+  titulaires   User[] @relation("UserTitulaireNiveau")
+
   @@map("niveau")
 }
 
@@ -92,6 +107,9 @@ model Section {
   eleves       Eleve[]
   absences     Absence[]
   coefficients Coefficient[]
+
+  /// Côté opposé de la relation User.titulaireSection
+  titulaires   User[] @relation("UserTitulaireSection")
 
   @@map("section")
 }
