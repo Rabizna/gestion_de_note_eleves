@@ -15,6 +15,7 @@ import matiereRoutes from "./routes/matiere.routes.js";
 import coefficientsRoutes from "./routes/coefficients.routes.js";
 import noteRoutes from "./routes/note.routes.js";
 import matriculeRoutes from "./routes/matricule.routes.js";
+import bulletinRoutes from "./routes/bulletin.routes.js";
 
 export const app = express();
 
@@ -22,9 +23,25 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// --- CORS : autoriser localhost + IP du LAN (point d'accès)
+const privateIpRegex = /^https?:\/\/((localhost)|((10|127)\.\d+\.\d+\.\d+)|(172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)|(192\.168\.\d+\.\d+))(:\d+)?$/i;
+
+const allowedOrigins = [
+  "http://192.168.56.1:5173",
+
+  process.env.FRONT_ORIGIN, // ex: http://192.168.0.123:5173
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: ["http://localhost:5173", process.env.FRONT_ORIGIN].filter(Boolean),
+    origin: (origin, cb) => {
+      // autoriser requêtes server-to-server (sans Origin)
+      if (!origin) return cb(null, true);
+      if (allowedOrigins.includes(origin) || privateIpRegex.test(origin)) {
+        return cb(null, true);
+      }
+      return cb(new Error(`CORS: Origin non autorisée -> ${origin}`), false);
+    },
     credentials: true,
   })
 );
@@ -71,8 +88,11 @@ app.use("/api/notes", noteRoutes);
 
 // Matricules
 app.use("/api/matricule", matriculeRoutes);
+//Bulletin
+app.use("/api/bulletin", bulletinRoutes);
 
 // 404 JSON (à la fin, après toutes les routes /api/*)
 app.use("/api", (_req, res) =>
   res.status(404).json({ message: "Route API introuvable." })
 );
+

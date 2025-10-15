@@ -1,5 +1,9 @@
 // client/src/api.js
-export const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+// Si VITE_API_URL n'est pas défini, on pointe automatiquement vers la même IP que le front
+// (utile quand on ouvre http://<IP_PC>:5173 sur le téléphone).
+const fallbackBase = `${window.location.protocol}//${window.location.hostname}:4000`;
+
+export const BASE_URL = import.meta.env.VITE_API_URL || fallbackBase;
 
 export async function api(path, opts = {}) {
   const isAbsolute = /^https?:\/\//i.test(path);

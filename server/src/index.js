@@ -7,8 +7,8 @@ import { seedSections } from "./seed/section.seed.js";
 const PORT = PORT_ENV || 4000;
 console.log(`ENV: ${NODE_ENV} — démarrage serveur...`);
 
-const server = app.listen(PORT, () => {
-  console.log(`API prête sur http://localhost:${PORT}`);
+const server = app.listen(PORT, "0.0.0.0", () => {
+  console.log(`API prête sur http://0.0.0.0:${PORT}`);
 });
 
 // Arrêt propre

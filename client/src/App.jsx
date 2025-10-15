@@ -74,6 +74,9 @@ export default function App() {
         <Route path="notes/archive/:cycle/:sub" element={<NotesArchive />} />
 
         <Route path="bulletin" element={<Bulletin />} />
+        <Route path="/dashboard/bulletin" element={<Bulletin />} />
+        <Route path="/dashboard/bulletin/:cycle" element={<Bulletin />} />
+        <Route path="/dashboard/bulletin/:cycle/:sub" element={<Bulletin />} />
       </Route>
 
       {/* 404 */}
