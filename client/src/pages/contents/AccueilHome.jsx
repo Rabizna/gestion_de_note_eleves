@@ -63,7 +63,7 @@ export default function AccueilHome() {
   const [students, setStudents] = useState([]);
   const [stuIndex, setStuIndex] = useState(0);
 
-  // normalise l’URL photo (dataURL, /uploads/..., chemin relatif…)
+  // normalise l'URL photo (dataURL, /uploads/..., chemin relatif…)
   const normPhoto = (p) => {
     if (!p) return DEFAULT_STUDENT;
     if (p.startsWith("data:image")) return p;
@@ -109,126 +109,253 @@ export default function AccueilHome() {
         .page-center{
           --wrap-w: min(820px, 94vw);
           --card-h: clamp(220px, 26vw, 260px);
-          display:flex; align-items:center; justify-content:center;
-          flex-direction:column; gap:12px;
-          padding:16px; background: transparent;
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-direction: column;
+          gap: 12px;
+          padding: 28px 18px;
+          background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 50%, #f97316 100%);
         }
 
         /* ============ CLOCK ============ */
         .clock-wrap{
           width: var(--wrap-w);
-          border-radius:18px; background:#000;
-          border:1px solid rgba(255,255,255,.08);
-          box-shadow: 0 18px 48px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.06);
-          padding:12px 18px;
+          border-radius: 18px;
+          background: rgba(255, 255, 255, 0.9);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          border: 1px solid rgba(255, 255, 255, 0.7);
+          box-shadow: 0 18px 48px rgba(0, 0, 0, 0.15), 0 12px 30px rgba(2, 6, 23, 0.16);
+          padding: 12px 18px;
         }
         .grid-fit{
-          display:grid;
+          display: grid;
           grid-template-columns: 64px 1fr max-content;
-          gap:12px; align-items:center;
+          gap: 12px;
+          align-items: center;
         }
-        .days{ margin:0; padding:0; list-style:none; }
-        .days li{ display:flex; align-items:center; gap:8px; font-size:13px; font-weight:800; letter-spacing:.3px; color:#334349; user-select:none; }
-        .days li .dot{ width:6px; height:6px; border-radius:50%; background:#334349; }
-        .days li.active{ color:#00e6a8; }
-        .days li.active .dot{ background:#00e6a8; box-shadow:0 0 10px #00e6a8, 0 0 20px rgba(0,230,168,.6); }
-        .today-label{ color:#00e6a8; font-weight:800; font-size:12px; letter-spacing:.12em; text-transform:uppercase; margin-bottom:6px; text-align:center; text-shadow: 0 0 8px rgba(0,230,168,.5); user-select:none; }
-        .digits{ color:#fff; font-weight:900; font-variant-numeric: tabular-nums; letter-spacing:.02em; line-height:1; text-shadow: 0 0 6px rgba(255,255,255,.35), 0 0 14px rgba(255,255,255,.16); font-size: clamp(44px, 9.2vw, 100px); }
-        .colon{ display:inline-block; margin:0 .06em; opacity:.25; transition:opacity .35s ease; }
-        .colon.on{ opacity:1; }
-        .right-num{ text-align:right; user-select:none; white-space:nowrap; color:#00e6a8; font-weight:900; font-variant-numeric: tabular-nums; text-shadow: 0 0 6px rgba(0,230,168,.7), 0 0 16px rgba(0,230,168,.35); }
-        .sec{ font-size: clamp(18px, 3.6vw, 30px); line-height:1; }
-        .date{ font-size: clamp(16px, 3vw, 28px); margin-top:4px; line-height:1; }
+        .days{ margin: 0; padding: 0; list-style: none; }
+        .days li{
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 13px;
+          font-weight: 800;
+          letter-spacing: 0.3px;
+          color: #64748b;
+          user-select: none;
+        }
+        .days li .dot{
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #64748b;
+        }
+        .days li.active{ color: #0ea5e9; }
+        .days li.active .dot{
+          background: #0ea5e9;
+          box-shadow: 0 0 10px #0ea5e9, 0 0 20px rgba(14, 165, 233, 0.6);
+        }
+        .today-label{
+          color: #0ea5e9;
+          font-weight: 800;
+          font-size: 12px;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          margin-bottom: 6px;
+          text-align: center;
+          text-shadow: 0 0 8px rgba(14, 165, 233, 0.5);
+          user-select: none;
+        }
+        .digits{
+          color: #0f172a;
+          font-weight: 900;
+          font-variant-numeric: tabular-nums;
+          letter-spacing: 0.02em;
+          line-height: 1;
+          text-shadow: 0 2px 8px rgba(15, 23, 42, 0.15);
+          font-size: clamp(44px, 9.2vw, 100px);
+        }
+        .colon{
+          display: inline-block;
+          margin: 0 0.06em;
+          opacity: 0.25;
+          transition: opacity 0.35s ease;
+        }
+        .colon.on{ opacity: 1; }
+        .right-num{
+          text-align: right;
+          user-select: none;
+          white-space: nowrap;
+          color: #0ea5e9;
+          font-weight: 900;
+          font-variant-numeric: tabular-nums;
+          text-shadow: 0 2px 8px rgba(14, 165, 233, 0.4);
+        }
+        .sec{
+          font-size: clamp(18px, 3.6vw, 30px);
+          line-height: 1;
+        }
+        .date{
+          font-size: clamp(16px, 3vw, 28px);
+          margin-top: 4px;
+          line-height: 1;
+        }
 
         @media (max-width: 430px){
-          .grid-fit{ grid-template-columns: 56px 1fr max-content; gap:10px; }
-          .days li{ font-size:12px; }
+          .grid-fit{
+            grid-template-columns: 56px 1fr max-content;
+            gap: 10px;
+          }
+          .days li{ font-size: 12px; }
         }
 
         /* ============ DOUBLE CARTES (hauteur 100% identique) ============ */
         .box-grid{
           width: var(--wrap-w);
-          display:grid;
+          display: grid;
           grid-template-columns: 48% 2% 48%;
-          align-items:stretch;
+          align-items: stretch;
         }
 
         .card{
           height: var(--card-h);
-          border-radius:14px;
-          background: #0c0c0c;
-          border:1px solid rgba(255,255,255,.08);
-          box-shadow: 0 14px 32px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.05);
-          color:#e2e8f0;
-          overflow:hidden;
+          border-radius: 14px;
+          background: rgba(255, 255, 255, 0.9);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          border: 1px solid rgba(255, 255, 255, 0.7);
+          box-shadow: 0 14px 32px rgba(0, 0, 0, 0.12), 0 12px 30px rgba(2, 6, 23, 0.16);
+          color: #0f172a;
+          overflow: hidden;
         }
 
         /* ===== Ticker gauche (forme carrée/rectangle) ===== */
         .ticker-card{
-          padding:16px;
-          display:flex;
-          flex-direction:column;
-          justify-content:space-between;
+          padding: 16px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
         }
         .ticker-top{
-          display:flex; align-items:center; justify-content:space-between; gap:12px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
         }
         .pill{
-          background: linear-gradient(135deg,#22c55e,#16a34a);
-          color:#fff; padding:8px 12px; border-radius:999px;
-          font-size:12px; font-weight:900;
-          box-shadow:0 8px 22px rgba(34,197,94,.25);
-          white-space:nowrap;
+          background: linear-gradient(135deg, #22c55e, #16a34a);
+          color: #fff;
+          padding: 8px 12px;
+          border-radius: 999px;
+          font-size: 12px;
+          font-weight: 900;
+          box-shadow: 0 8px 22px rgba(34, 197, 94, 0.25);
+          white-space: nowrap;
         }
-        .class-label{ color:#fff; font-weight:900; letter-spacing:.02em; }
+        .class-label{
+          color: #0f172a;
+          font-weight: 900;
+          letter-spacing: 0.02em;
+        }
         .count{
-          color:#00e6a8; font-weight:900; font-size:32px; font-variant-numeric: tabular-nums;
-          text-shadow: 0 0 6px rgba(0,230,168,.7), 0 0 16px rgba(0,230,168,.35);
+          color: #0ea5e9;
+          font-weight: 900;
+          font-size: 32px;
+          font-variant-numeric: tabular-nums;
+          text-shadow: 0 2px 8px rgba(14, 165, 233, 0.4);
         }
         .ticker-body{
-          flex:1;
-          border-radius:10px;
-          background: linear-gradient(180deg, rgba(255,255,255,0.04), transparent);
-          margin-top:12px;
+          flex: 1;
+          border-radius: 10px;
+          background: linear-gradient(180deg, rgba(14, 165, 233, 0.08), transparent);
+          margin-top: 12px;
         }
 
         /* ===== Carte élève droite ===== */
         .student-card{
-          padding:16px;
-          display:flex;
-          flex-direction:column;
-          justify-content:space-between;
+          padding: 16px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
         }
         .badge{
-          align-self:flex-start;
-          background: #3b82f6;
-          color:#fff; font-weight:900; font-size:12px; border-radius:999px;
-          padding:8px 12px; box-shadow:0 8px 22px rgba(59,130,246,.28);
+          align-self: flex-start;
+          background: linear-gradient(135deg, #3b82f6, #6366f1);
+          color: #fff;
+          font-weight: 900;
+          font-size: 12px;
+          border-radius: 999px;
+          padding: 8px 12px;
+          box-shadow: 0 8px 22px rgba(59, 130, 246, 0.28);
         }
         .student-row{
-          display:flex; gap:14px; margin-top:8px;
+          display: flex;
+          gap: 14px;
+          margin-top: 8px;
         }
         .student-photo{
-          width:92px; height:92px; border-radius:10px; overflow:hidden;
-          background:#0f172a; border:1px solid rgba(255,255,255,.1);
-          flex-shrink:0;
+          width: 92px;
+          height: 92px;
+          border-radius: 10px;
+          overflow: hidden;
+          background: #0f172a;
+          border: 2px solid #0ea5e9;
+          flex-shrink: 0;
         }
         .student-photo img{
-          width:100%; height:100%; object-fit:cover; display:block;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
         }
         .student-info{
-          display:flex; flex-direction:column; gap:4px; min-width:0;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          min-width: 0;
         }
-        .student-name{ color:#fff; font-weight:900; font-size:20px; }
-        .student-class{ color:#94a3b8; font-weight:800; }
-        .student-meta{ color:#94a3b8; font-weight:700; font-size:14px; display:flex; gap:16px; flex-wrap:wrap; }
+        .student-name{
+          color: #0f172a;
+          font-weight: 900;
+          font-size: 20px;
+        }
+        .student-class{
+          color: #475569;
+          font-weight: 800;
+        }
+        .student-meta{
+          color: #64748b;
+          font-weight: 700;
+          font-size: 14px;
+          display: flex;
+          gap: 16px;
+          flex-wrap: wrap;
+        }
         .student-actions{
-          display:flex; justify-content:flex-end; margin-top:auto;
+          display: flex;
+          justify-content: flex-end;
+          margin-top: auto;
         }
         .btn-green{
-          background: linear-gradient(135deg,#22c55e 0%, #16a34a 50%, #14532d 100%);
-          color:#fff; border:0; border-radius:12px; padding:10px 16px; font-weight:900; cursor:pointer;
-          box-shadow:0 10px 24px rgba(2,6,23,.18);
+          background: linear-gradient(135deg, #0ea5e9, #6366f1);
+          color: #fff;
+          border: 0;
+          border-radius: 12px;
+          padding: 10px 16px;
+          font-weight: 900;
+          cursor: pointer;
+          box-shadow: 0 10px 24px rgba(14, 165, 233, 0.25);
+          transition: transform 0.08s ease, filter 0.12s ease;
+        }
+        .btn-green:hover{
+          transform: translateY(-1px);
+          filter: brightness(1.05);
+        }
+        .btn-green:active{
+          transform: translateY(0);
         }
       `}</style>
 
@@ -245,7 +372,7 @@ export default function AccueilHome() {
           </ul>
 
           <div className="flex flex-col items-center justify-center">
-            <div className="today-label">Aujourd’hui</div>
+            <div className="today-label">Aujourd'hui</div>
             <div className="digits select-none">
               {H}
               <span className={`colon ${blink ? "on" : ""}`}>:</span>
@@ -270,7 +397,7 @@ export default function AccueilHome() {
           {classesStats.length ? (
             <>
               <div className="ticker-top">
-                <div className="pill">Absents aujourd’hui</div>
+                <div className="pill">Absents aujourd'hui</div>
                 <div className="class-label">{classesStats[slideIdx].label}</div>
                 <div className="count">{classesStats[slideIdx].count}</div>
               </div>
@@ -279,7 +406,7 @@ export default function AccueilHome() {
           ) : (
             <>
               <div className="ticker-top">
-                <div className="pill">Absents aujourd’hui</div>
+                <div className="pill">Absents aujourd'hui</div>
                 <div className="class-label">—</div>
                 <div className="count">0</div>
               </div>
@@ -293,7 +420,7 @@ export default function AccueilHome() {
 
         {/* droite : élève */}
         <div className="card student-card">
-          <div className="badge">Élève à l’honneur</div>
+          <div className="badge">Élève à l'honneur</div>
 
           <div className="student-row">
             <div className="student-photo">

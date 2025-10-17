@@ -6,13 +6,13 @@ import {
   updateEleveInscription,
   debugLevels,
   divideSecondeSections,
-  listElevesInscrits,       // <<< NEW
-  getInscriptionRefs,       // <<< NEW
+  listElevesInscrits,
+  getInscriptionRefs,
+  updateAllClassNumbers,
 } from "../controllers/inscription.controller.js";
 import { requireAuth } from "../middleware/auth.js";
 
 const router = Router();
-
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
@@ -22,9 +22,9 @@ const upload = multer({
 router.get("/levels-debug", requireAuth, debugLevels);
 
 // Refs pour filtres
-router.get("/refs", requireAuth, getInscriptionRefs);          // <<< NEW
+router.get("/refs", requireAuth, getInscriptionRefs);
 
-// Liste (écrans d’inscription)
+// Liste (écrans d'inscription)
 router.get("/eleves", requireAuth, listElevesInscription);
 
 // MAJ élève (inscription PT)
@@ -40,10 +40,13 @@ router.put(
   updateEleveInscription
 );
 
-// Division Seconde A/B/C (proviseur) + inscrit=true
+// Division Seconde A/B/C (proviseur) + inscrit=true + numérotation
 router.post("/seconde/diviser", requireAuth, divideSecondeSections);
 
-// <<< NEW — Liste des élèves inscrits
+// Liste des élèves inscrits (avec numéros)
 router.get("/inscrits", requireAuth, listElevesInscrits);
+
+// Mise à jour manuelle/automatique des numéros
+router.post("/update-numbers", requireAuth, updateAllClassNumbers);
 
 export default router;

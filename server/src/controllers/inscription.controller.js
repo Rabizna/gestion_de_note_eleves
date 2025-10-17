@@ -3,7 +3,6 @@ import { prisma } from "../prisma.js";
 
 /* ------------------------------------------------------------------ */
 /*               CONFIGURE ICI TES IDs DE SECTIONS                     */
-/*  Si tes IDs ne sont pas 1/2/3/4/5/6, mets les bons numéros !        */
 /* ------------------------------------------------------------------ */
 const SECTION_IDS = {
   A: 1,   // Seconde A
@@ -14,6 +13,76 @@ const SECTION_IDS = {
   OSE: 6, // Première/Terminale OSE
 };
 
+/* ------------------------------------------------------------------ */
+/*           FONCTION DE NUMÉROTATION AUTOMATIQUE                      */
+/* ------------------------------------------------------------------ */
+async function updateClassNumbers(niveauId = null, sectionId = null) {
+  try {
+    // Si niveau ET section spécifiés, on met à jour juste cette classe
+    if (niveauId && sectionId) {
+      const eleves = await prisma.eleve.findMany({
+        where: {
+          inscrit: true,
+          niveauId,
+          sectionId,
+        },
+        orderBy: [{ nom: "asc" }, { prenom: "asc" }],
+        select: { id: true },
+      });
+
+      // Attribution des numéros séquentiels
+      const updates = eleves.map((eleve, index) =>
+        prisma.eleve.update({
+          where: { id: eleve.id },
+          data: { numero: index + 1 },
+        })
+      );
+
+      await prisma.$transaction(updates);
+      return { updated: eleves.length, classe: `${niveauId}-${sectionId}` };
+    }
+
+    // Sinon, on met à jour TOUTES les classes
+    const classes = await prisma.eleve.groupBy({
+      by: ["niveauId", "sectionId"],
+      where: {
+        inscrit: true,
+        niveauId: { not: null },
+        sectionId: { not: null },
+      },
+    });
+
+    let totalUpdated = 0;
+
+    for (const classe of classes) {
+      const eleves = await prisma.eleve.findMany({
+        where: {
+          inscrit: true,
+          niveauId: classe.niveauId,
+          sectionId: classe.sectionId,
+        },
+        orderBy: [{ nom: "asc" }, { prenom: "asc" }],
+        select: { id: true },
+      });
+
+      const updates = eleves.map((eleve, index) =>
+        prisma.eleve.update({
+          where: { id: eleve.id },
+          data: { numero: index + 1 },
+        })
+      );
+
+      await prisma.$transaction(updates);
+      totalUpdated += eleves.length;
+    }
+
+    return { updated: totalUpdated, classes: classes.length };
+  } catch (e) {
+    console.error("Erreur updateClassNumbers:", e);
+    throw e;
+  }
+}
+
 /* Helpers */
 function norm(s) {
   return String(s || "")
@@ -22,6 +91,7 @@ function norm(s) {
     .toLowerCase()
     .trim();
 }
+
 function classNiveauName(nom) {
   const n = norm(nom);
   if (n.includes("2nde") || n.includes("2de") || /\b2e?\b/.test(n) || n.includes("2eme") || n.includes("secon")) {
@@ -35,6 +105,7 @@ function classNiveauName(nom) {
   }
   return null;
 }
+
 function mapEleve(e) {
   if (!e) return null;
   let photo = null;
@@ -54,6 +125,7 @@ function mapEleve(e) {
     photo,
     domicile: e.domicile ?? null,
     telephone: e.telephone ?? null,
+    numero: e.numero ?? null,
     niveauId: e.niveauId ?? e.id_niveau ?? null,
     sectionId: e.sectionId ?? e.id_section ?? null,
     niveau: e.niveau ? { id: e.niveau.id, nom: e.niveau.nom } : null,
@@ -72,7 +144,7 @@ export async function debugLevels(_req, res) {
   }
 }
 
-/* GET /api/inscription/eleves  (listes pour écrans d’inscription) */
+/* GET /api/inscription/eleves  (listes pour écrans d'inscription) */
 export async function listElevesInscription(req, res) {
   try {
     const q = req.query;
@@ -90,7 +162,6 @@ export async function listElevesInscription(req, res) {
     if (Number.isFinite(forceNiveauId) && forceNiveauId > 0) {
       where.niveauId = forceNiveauId;
     } else {
-      // classe dynamique des niveaux
       const niveaux = await prisma.niveau.findMany({ select: { id: true, nom: true } });
       const idsSeconde = [], idsPremiere = [], idsTerminale = [];
       for (const n of niveaux) {
@@ -140,7 +211,6 @@ export async function updateEleveInscription(req, res) {
       data.sectionId = targetId;
     }
 
-    // photo optionnelle
     const file = (req.files || []).find((f) => f.fieldname === "photo") || (req.files || [])[0];
     if (file?.buffer?.length) data.photo = file.buffer;
 
@@ -150,6 +220,11 @@ export async function updateEleveInscription(req, res) {
       include: { niveau: true, section: true },
     });
 
+    // Mise à jour automatique des numéros de la classe
+    if (updated.niveauId && updated.sectionId) {
+      await updateClassNumbers(updated.niveauId, updated.sectionId);
+    }
+
     res.json({ eleve: mapEleve(updated) });
   } catch (e) {
     console.error("updateEleveInscription error:", e);
@@ -158,7 +233,7 @@ export async function updateEleveInscription(req, res) {
   }
 }
 
-/* NOUVEAU — GET /api/inscription/inscrits  (liste des élèves inscrits) */
+/* GET /api/inscription/inscrits  (liste des élèves inscrits avec leurs numéros) */
 export async function listElevesInscrits(req, res) {
   try {
     const page = Math.max(1, Number(req.query.page) || 1);
@@ -182,7 +257,11 @@ export async function listElevesInscrits(req, res) {
       prisma.eleve.findMany({
         where,
         include: { niveau: true, section: true },
-        orderBy: [{ nom: "asc" }, { prenom: "asc" }],
+        orderBy: [
+          { niveauId: "asc" },
+          { sectionId: "asc" },
+          { numero: "asc" },
+        ],
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
@@ -201,7 +280,7 @@ export async function listElevesInscrits(req, res) {
   }
 }
 
-/* NOUVEAU — GET /api/inscription/refs  (niveaux & sections pour les filtres) */
+/* GET /api/inscription/refs  (niveaux & sections pour les filtres) */
 export async function getInscriptionRefs(_req, res) {
   try {
     const [niveaux, sections] = await Promise.all([
@@ -215,7 +294,7 @@ export async function getInscriptionRefs(_req, res) {
   }
 }
 
-/* POST /api/inscription/seconde/diviser  (A/B/C + inscrit=true) */
+/* POST /api/inscription/seconde/diviser  (A/B/C + inscrit=true + numérotation) */
 export async function divideSecondeSections(req, res) {
   try {
     const role = String(req.user?.role || "").toUpperCase();
@@ -259,9 +338,44 @@ export async function divideSecondeSections(req, res) {
     }
 
     await prisma.$transaction(ops);
+
+    // Mise à jour des numéros pour toutes les classes de seconde
+    for (const niveauId of idsSeconde) {
+      for (const sectionId of [idA, idB, idC]) {
+        await updateClassNumbers(niveauId, sectionId);
+      }
+    }
+
     res.json({ updated: rows.length, assigned });
   } catch (e) {
     console.error("divideSecondeSections error:", e);
     res.status(500).json({ message: "Erreur lors de la division des sections." });
+  }
+}
+
+/* POST /api/inscription/update-numbers */
+export async function updateAllClassNumbers(req, res) {
+  try {
+    const role = String(req.user?.role || "").toUpperCase();
+    if (role !== "PROVISEUR") {
+      return res.status(403).json({ message: "Action réservée au proviseur." });
+    }
+
+    const niveauId = Number(req.body?.niveauId);
+    const sectionId = Number(req.body?.sectionId);
+
+    const result = await updateClassNumbers(
+      niveauId || null,
+      sectionId || null
+    );
+
+    res.json({
+      success: true,
+      message: "Numérotation mise à jour avec succès",
+      ...result,
+    });
+  } catch (e) {
+    console.error("updateAllClassNumbers error:", e);
+    res.status(500).json({ message: "Erreur lors de la mise à jour des numéros." });
   }
 }

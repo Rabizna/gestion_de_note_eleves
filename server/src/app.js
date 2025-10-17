@@ -17,6 +17,7 @@ import noteRoutes from "./routes/note.routes.js";
 import matriculeRoutes from "./routes/matricule.routes.js";
 import bulletinRoutes from "./routes/bulletin.routes.js";
 import elevesRoutes from "./routes/eleves.routes.js";
+import inscriptionRoutes from "./routes/inscription.routes.js";
 
 export const app = express();
 
@@ -95,6 +96,8 @@ app.use("/api/matricule", matriculeRoutes);
 app.use("/api/bulletin", bulletinRoutes);
 
 app.use("/api/eleves", elevesRoutes);
+
+app.use("/api/inscription", inscriptionRoutes); // ⭐ Cette ligne est cruciale
 
 // 404 JSON (à la fin, après toutes les routes /api/*)
 app.use("/api", (_req, res) =>
