@@ -1,4 +1,3 @@
-// client/src/pages/contents/Absence.jsx
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -159,6 +158,9 @@ export default function Absence() {
         .radioInput:checked + .radioLabel{
           border-color:#0ea5e9; box-shadow:0 0 0 3px rgba(14,165,233,.22); background:#f0f9ff;
         }
+
+        /* Astuce permission */
+        .perm-hint{ color:#b91c1c; font-weight:800; }
       `}</style>
 
       <div className="wrap">
@@ -185,7 +187,7 @@ export default function Absence() {
           </>
         )}
 
-        {/* FORMULAIRE: route finale — inchangé */}
+        {/* FORMULAIRE */}
         {cycle && sub && (
           <>
             <div className="crumbs">
@@ -212,7 +214,23 @@ function AbsenceForm({ cycle, sub }) {
   const [plage, setPlage] = useState(""); // "MATIN" | "APRES_MIDI"
   const [motif, setMotif] = useState("");
 
+  // === Nouveaux états permission ===
+  const [me, setMe] = useState(null);          // { role, titulaireNiveauId, titulaireSectionId, ... }
+  const [canWrite, setCanWrite] = useState(false);
+
   const title = `Absence ${cap(cycle)} ${sub}`;
+
+  // Charge session utilisateur
+  useEffect(() => {
+    (async () => {
+      try {
+        const { user } = await api("/api/auth/me");
+        setMe(user || null);
+      } catch {
+        setMe(null);
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -232,9 +250,22 @@ function AbsenceForm({ cycle, sub }) {
     setMotif("");
   }, [cycle, sub]);
 
+  // Quand on choisit un élève → calcule le droit d’écriture
   const onSelectEleve = () => {
     const e = eleves.find((x) => String(x.id) === String(selId));
     setCur(e || null);
+
+    // Permission : proviseur = OK ; prof titulaire sur la classe de l'élève = OK
+    if (me && e?.niveau?.id != null && e?.section?.id != null) {
+      const ok =
+        me.role === "PROVISEUR" ||
+        (me.role === "PROFESSEUR" &&
+          Number(me.titulaireNiveauId) === Number(e.niveau.id) &&
+          Number(me.titulaireSectionId) === Number(e.section.id));
+      setCanWrite(!!ok);
+    } else {
+      setCanWrite(false);
+    }
   };
 
   const normPhoto = (p) => {
@@ -248,12 +279,16 @@ function AbsenceForm({ cycle, sub }) {
     setDateAbs("");
     setPlage("");
     setMotif("");
+    setCanWrite(false);
   };
 
   const enregistrer = async () => {
     if (!cur) return Swal.fire("Erreur", "Veuillez sélectionner un élève.", "error");
     if (!dateAbs) return Swal.fire("Erreur", "Veuillez sélectionner une date.", "error");
     if (!plage) return Swal.fire("Erreur", "Choisissez Matin ou Après-midi.", "error");
+    if (!canWrite) {
+      return Swal.fire("Accès refusé", "Action réservée au proviseur ou au titulaire de cette classe.", "warning");
+    }
 
     try {
       await api("/api/absence", {
@@ -344,6 +379,15 @@ function AbsenceForm({ cycle, sub }) {
             <label className="lbl">Motif</label>
             <input className="select" type="text" value={motif} onChange={(e)=>setMotif(e.target.value)} style={{height:60}} placeholder="(optionnel)" />
           </div>
+
+          {/* Indication permission */}
+          {cur && (
+            <div className="row">
+              <span className="perm-hint">
+                {canWrite ? "✅ Vous pouvez enregistrer pour cette classe." : "⛔ Réservé au proviseur ou au titulaire de cette classe."}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Colonne droite : photo */}
@@ -354,11 +398,9 @@ function AbsenceForm({ cycle, sub }) {
 
       {/* Boutons */}
       <div className="btns">
-        <button className="btn success"  onClick={enregistrer} style={{ background: 'linear-gradient(135deg,#22c55e 0%, #16a34a 50%, #14532d 100%)' }}>💾 Enregistrer</button>
+        <button className="btn" disabled={!canWrite} onClick={enregistrer} style={{ background: 'linear-gradient(135deg,#22c55e 0%, #16a34a 50%, #14532d 100%)', opacity: canWrite ? 1 : .6 }}>💾 Enregistrer</button>
         <button className="btn secondary" onClick={resetForm}>🔄 Actualiser</button>
         <button className="btn danger" onClick={() => navigate("/dashboard")} style={{ background: 'linear-gradient(135deg,#ef4444 0%, #dc2626 55%, #b91c1c 100%)' }}>🏠 Quitter</button>
-
-
       </div>
 
       <button

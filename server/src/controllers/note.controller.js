@@ -380,11 +380,14 @@ export async function updateNote(req, res) {
     if (!eleveId || !matiereId || Number.isNaN(note) || !trimestreLabel || !noteStatut) {
       return res.status(400).json({ message: "Champs requis: eleveId, matiereId, note, trimestre, noteStatut." });
     }
-    if (note < 0 || note > 20) return res.status(400).json({ message: "La note doit être comprise entre 0 et 20." });
+    if (note < 0 || note > 20) {
+      return res.status(400).json({ message: "La note doit être comprise entre 0 et 20." });
+    }
 
     const trimestre = mapTrimestre(trimestreLabel);
     const statut = mapStatut(noteStatut);
 
+    // On récupère la classe de l'élève pour recalculer le coefficient
     const eleve = await prisma.eleve.findUnique({
       where: { id: eleveId },
       select: { niveauId: true, sectionId: true },
@@ -400,21 +403,29 @@ export async function updateNote(req, res) {
     const data = {
       note,
       noteTotalJournalier: statut === "NOTE_JOURNALIERE" ? note * coefficient : null,
-      noteTotalExamen: statut === "NOTE_EXAMEN" ? note * coefficient : null,
+      noteTotalExamen:     statut === "NOTE_EXAMEN"      ? note * coefficient : null,
     };
 
-    // upsert via contrainte unique composite (eleveId, matiereId, trimestre, statut)
-    const saved = await prisma.note.upsert({
-      where: { eleveId_matiereId_trimestre_statut: { eleveId, matiereId, trimestre, statut } },
-      update: data,
-      create: { eleveId, matiereId, trimestre, statut, ...data, noteMoyenne: null, noteTotal: null },
+    // ⚠️ update sur la contrainte unique COMPOSÉE nommée "uq_note_eleve_matiere_trim_statut"
+    const saved = await prisma.note.update({
+      where: {
+        uq_note_eleve_matiere_trim_statut: { eleveId, matiereId, trimestre, statut },
+      },
+      data,
       select: { id: true, note: true, noteTotalJournalier: true, noteTotalExamen: true },
     });
 
     const noteTotal = statut === "NOTE_JOURNALIERE" ? saved.noteTotalJournalier : saved.noteTotalExamen;
     return res.json({ ok: true, id: saved.id, coefficient, note: saved.note, noteTotal });
   } catch (e) {
+    // P2025 = record not found -> aucune note existante (on ne crée pas depuis l’archive)
+    if (e?.code === "P2025") {
+      return res.status(404).json({
+        message: "Aucune note existante pour cet élève / matière / trimestre / type (création interdite depuis l'archive).",
+      });
+    }
     console.error("updateNote error:", e);
     return res.status(500).json({ message: "Erreur: mise à jour de la note." });
   }
 }
+

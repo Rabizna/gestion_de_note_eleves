@@ -1,4 +1,3 @@
-// client/src/pages/contents/AbsenceArchive.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -15,11 +14,28 @@ export default function AbsenceArchive() {
   const [absences, setAbsences] = useState([]);
   const [index, setIndex] = useState(0);
   const [canEdit, setCanEdit] = useState(false);
+
+  // === Nouveaux états permission ===
+  const [me, setMe] = useState(null); // user session
+  const [canWriteForClass, setCanWriteForClass] = useState(false);
+
   const [motif, setMotif] = useState("");
   const canvasRef = useRef(null);
   const chartRef = useRef(null);
 
   const title = `Archive des Absences ${cap(cycle)} ${sub}`;
+
+  // Chargement session
+  useEffect(() => {
+    (async () => {
+      try {
+        const { user } = await api("/api/auth/me");
+        setMe(user || null);
+      } catch {
+        setMe(null);
+      }
+    })();
+  }, []);
 
   // Chargement élèves + stats (graph)
   useEffect(() => {
@@ -48,7 +64,6 @@ export default function AbsenceArchive() {
   }, [cycle, sub]);
 
   function drawChart(stats) {
-    // Prépare les labels (nom le plus court entre nom/prénom) & couleurs
     const labels = stats.map((s) => shortestWord(`${s.nom} ${s.prenom}`));
     const data = stats.map((s) => s.total);
     const colors = data.map((n) => {
@@ -88,7 +103,7 @@ export default function AbsenceArchive() {
     });
   }
 
-  // Quand on clique un élève, on charge ses absences
+  // Quand on clique un élève, on charge ses absences et on calcule permission
   const pickEleve = async (e) => {
     setSelected(e);
     setAbsences([]);
@@ -104,6 +119,18 @@ export default function AbsenceArchive() {
     } catch (err) {
       Swal.fire("Erreur", err.message || "Impossible de charger les absences.", "error");
     }
+
+    // Permission par classe de l'élève
+    if (me && e?.niveau?.id != null && e?.section?.id != null) {
+      const ok =
+        me.role === "PROVISEUR" ||
+        (me.role === "PROFESSEUR" &&
+          Number(me.titulaireNiveauId) === Number(e.niveau.id) &&
+          Number(me.titulaireSectionId) === Number(e.section.id));
+      setCanWriteForClass(!!ok);
+    } else {
+      setCanWriteForClass(false);
+    }
   };
 
   // Naviguer dans les absences
@@ -114,6 +141,9 @@ export default function AbsenceArchive() {
   }, [curAbs?.id]); // eslint-disable-line
 
   const saveMotif = async () => {
+    if (!canWriteForClass) {
+      return Swal.fire("Accès refusé", "Action réservée au proviseur ou au titulaire de cette classe.", "warning");
+    }
     if (!canEdit) {
       return Swal.fire("Modification désactivée", "Active le switch pour modifier.", "warning");
     }
@@ -224,6 +254,7 @@ export default function AbsenceArchive() {
         .danger{ background: linear-gradient(135deg,#ef4444,#b91c1c); }
 
         .chartBox{ height:400px; margin-top:14px; }
+        .perm-hint{ color:#b91c1c; font-weight:800; text-align:center; }
       `}</style>
 
       <div className="wrap">
@@ -278,11 +309,20 @@ export default function AbsenceArchive() {
 
                 <div className="row" style={{marginTop:10}}>
                   <span className="lbl">Modifier</span>
-                  <label className="switch">
-                    <input type="checkbox" checked={canEdit} onChange={(e)=>setCanEdit(e.target.checked)} />
+                  <label className="switch" title={canWriteForClass ? "" : "Réservé au proviseur ou au titulaire"}>
+                    <input
+                      type="checkbox"
+                      checked={canEdit && canWriteForClass}
+                      disabled={!canWriteForClass}
+                      onChange={(e)=>setCanEdit(e.target.checked)}
+                    />
                     <span className="slider"></span>
                   </label>
                 </div>
+
+                {!canWriteForClass && (
+                  <div className="perm-hint">⛔ Vous n'êtes pas autorisé à modifier pour cette classe.</div>
+                )}
 
                 {curAbs ? (
                   <>
@@ -293,14 +333,14 @@ export default function AbsenceArchive() {
                       <textarea
                         className="read"
                         style={{minHeight:80, background:"#fff", border:"1px solid #e5e7eb"}}
-                        disabled={!canEdit}
+                        disabled={!canEdit || !canWriteForClass}
                         value={motif}
                         onChange={(e)=>setMotif(e.target.value)}
                       />
                     </div>
                     <div className="row" style={{justifyContent:"space-between", width:"100%"}}>
                       <button className="btn secondary" disabled={index<=0} onClick={()=>setIndex(i=>Math.max(0,i-1))}>← Précédent</button>
-                      <button className="btn primary" disabled={!canEdit} onClick={saveMotif}>💾 Enregistrer</button>
+                      <button className="btn primary" disabled={!canEdit || !canWriteForClass} onClick={saveMotif}>💾 Enregistrer</button>
                       <button className="btn secondary" disabled={index>=absences.length-1} onClick={()=>setIndex(i=>Math.min(absences.length-1,i+1))}>Suivant →</button>
                     </div>
                   </>

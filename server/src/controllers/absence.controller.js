@@ -72,13 +72,16 @@ export async function listElevesByClass(req, res) {
 export async function createAbsence(req, res) {
   try {
     const eleveId = Number(req.body?.eleveId);
-    const date = String(req.body?.date); // "YYYY-MM-DD"
+    const dateStr = String(req.body?.date); // "YYYY-MM-DD"
     const plage = String(req.body?.plage || ""); // "MATIN" | "APRES_MIDI"
     const motif = req.body?.motif ?? null;
 
-    if (!eleveId || !date || !plage) {
+    if (!eleveId || !dateStr || !plage) {
       return res.status(400).json({ message: "Champs requis manquants." });
     }
+
+    // ⬇️ Normalise la date à minuit UTC pour rester cohérent avec la lecture
+    const dateUtc = new Date(`${dateStr}T00:00:00.000Z`);
 
     // récupérer la classe de l’élève pour historiser niveau/section dans l’absence
     const el = await prisma.eleve.findUnique({
@@ -91,8 +94,8 @@ export async function createAbsence(req, res) {
       const created = await prisma.absence.create({
         data: {
           eleveId,
-          date: new Date(date),
-          plage, // enum AbsPlage
+          date: dateUtc, // ⬅️ stocké à minuit UTC
+          plage,
           motif: motif || null,
           niveauId: el.niveauId ?? null,
           sectionId: el.sectionId ?? null,
@@ -100,7 +103,6 @@ export async function createAbsence(req, res) {
       });
       res.json({ ok: true, absence: created });
     } catch (e) {
-      // contrainte unique (eleveId, date, plage)
       if (e?.code === "P2002") {
         return res
           .status(409)
@@ -194,5 +196,58 @@ export async function updateAbsenceMotif(req, res) {
     console.error(e);
     if (e?.code === "P2025") return res.status(404).json({ message: "Absence introuvable." });
     res.status(500).json({ message: "Erreur MAJ motif." });
+  }
+}
+
+/* ---------- ABSENTS DU JOUR (par classe) ---------- */
+export async function todayCountsByClass(_req, res) {
+  try {
+    // Fenêtre LOCALE du jour
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+
+    const rows = await prisma.absence.findMany({
+      where: { date: { gte: start, lt: end } },
+      select: { niveauId: true, sectionId: true, eleveId: true },
+    });
+
+    // Compter 1 élève unique par classe (matin+apm = 1)
+    const mapClassToSet = new Map(); // "niv:sec" -> Set(eleveId)
+    for (const r of rows) {
+      if (!r.niveauId || !r.sectionId) continue;
+      const key = `${r.niveauId}:${r.sectionId}`;
+      if (!mapClassToSet.has(key)) mapClassToSet.set(key, new Set());
+      mapClassToSet.get(key).add(r.eleveId);
+    }
+
+    // Ordre d'affichage voulu
+    const CYCLE_IDS = { seconde: 1, premiere: 2, terminale: 3 };
+    const SECTION_IDS = { A: 1, B: 2, C: 3, L: 4, S: 5, OSE: 6 };
+    const ID2NOM = { seconde: "Seconde", premiere: "Première", terminale: "Terminale" };
+    const order = [
+      ["seconde", ["A", "B", "C"]],
+      ["premiere", ["L", "S", "OSE"]],
+      ["terminale", ["L", "S", "OSE"]],
+    ];
+
+    const classes = [];
+    for (const [cycleKey, sections] of order) {
+      const nivId = CYCLE_IDS[cycleKey];
+      const cycleLabel = ID2NOM[cycleKey];
+      for (const secKey of sections) {
+        const secId = SECTION_IDS[secKey];
+        const label = `${cycleLabel} ${secKey}`;
+        const key = `${nivId}:${secId}`;
+        const count = mapClassToSet.get(key)?.size || 0;
+        classes.push({ label, count });
+      }
+    }
+
+    res.json({ classes });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Erreur stats absents du jour." });
   }
 }

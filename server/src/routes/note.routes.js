@@ -9,24 +9,29 @@ import {
   createNote,
   updateNote,
 } from "../controllers/note.controller.js";
+import { requireTitulaireOrProviseurForClass } from "../middleware/roleGuards.js";
 
 const router = Router();
 router.use(requireAuth);
 
-// Élèves
+// Élèves (lecture libre)
 router.get("/eleves", listEleves);
 router.get("/eleves/:cycle/:sub", listEleves);
 
-// Matières / coefficients
+// Matières / coefficients (lecture libre)
 router.get("/matieres", listMatieresForClass);
 router.get("/matieres/:cycle/:sub", listMatieresForClass);
 
-// Création
-router.post("/", createNote);
+// Création de note
+// → Protégé: seul proviseur ou titulaire de la classe peut créer
+router.post("/", requireTitulaireOrProviseurForClass, createNote);
 
-// Archive + Radar + Update
+// Archive + Radar (lecture libre)
 router.get("/archive", listNotesForArchive);
 router.get("/radar", getNotesForRadar);
-router.put("/update", updateNote);
+
+// Mise à jour de note
+// → Protégé: seul proviseur ou titulaire de la classe peut modifier
+router.put("/update", requireTitulaireOrProviseurForClass, updateNote);
 
 export default router;

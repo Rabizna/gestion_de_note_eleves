@@ -38,30 +38,22 @@ export default function Notes() {
         :root{
           --ink:#0f172a; --muted:#475569; --line:#e5e7eb; --ring:#93c5fd;
         }
-
-        /* ===== Page gradient & layout (même esprit qu'Absence) ===== */
         .wrap{
-          min-height:100vh;
-          padding:28px 18px;
+          min-height:100vh; padding:28px 18px;
           background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 50%, #f97316 100%);
           display:flex; flex-direction:column; gap:18px; align-items:center;
         }
-
         .title{
           color:#ffffff; font-size: clamp(22px, 2.4vw, 32px); font-weight:900;
           letter-spacing:.3px; text-align:center; margin:2px 0 4px;
           text-shadow:0 2px 10px rgba(0,0,0,.25);
           border-bottom:none;
         }
-
-        /* ===== Grids de choix ===== */
         .grid-3{
           width:100%; max-width:1100px;
           display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:18px; margin-top:18px;
         }
         @media (max-width: 900px){ .grid-3{ grid-template-columns:1fr; } }
-
-        /* ===== Gros boutons (niveaux + sous-boutons) ===== */
         .btnBig{
           background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 55%, #7c3aed 100%);
           color:#fff; border:0; border-radius:18px; padding:22px;
@@ -72,18 +64,14 @@ export default function Notes() {
         }
         .btnBig:hover{ transform: translateY(-2px); filter: brightness(1.06); box-shadow: 0 20px 44px rgba(2,6,23,.28); }
         .btnBig:active{ transform: translateY(-1px); }
-
-        /* ===== Petits boutons / fil d’Ariane ===== */
         .back{
           align-self:flex-start;
           background: linear-gradient(135deg,#cbd5e1,#94a3b8);
-          color:#0f172a;
-          border:0; border-radius:12px; padding:8px 12px; font-weight:900; cursor:pointer;
+          color:#0f172a; border:0; border-radius:12px; padding:8px 12px; font-weight:900; cursor:pointer;
           box-shadow:0 8px 20px rgba(2,6,23,.14);
           transition: transform .08s ease, filter .12s ease, box-shadow .2s ease;
         }
         .back:hover{ transform: translateY(-1px); filter: brightness(1.02); }
-
         .crumbs{
           width:100%; max-width:1100px;
           display:flex; gap:10px; align-items:center; color:#e2e8f0;
@@ -94,53 +82,6 @@ export default function Notes() {
           box-shadow:0 8px 20px rgba(2,6,23,.14);
         }
         .crumbs a{ color:#fff; text-decoration:underline; }
-
-        /* ===== Form container (glass) ===== */
-        .formWrap{
-          width:100%; max-width:1100px;
-          display:flex; justify-content:space-between; gap:20px; margin-top:16px;
-          background: rgba(255,255,255,0.92);
-          backdrop-filter: blur(8px);
-          border:1px solid rgba(255,255,255,.7);
-          border-radius:18px;
-          box-shadow:0 12px 30px rgba(2,6,23,.16);
-          padding:16px;
-        }
-        .col{ flex:1; display:flex; flex-direction:column; gap:14px; }
-        .row{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-        .lbl{ width:190px; font-weight:900; color:#083940; }
-        .read{ flex:1; background:#fff; border-radius:12px; min-height:20px; padding:10px 12px; border:1px solid var(--line); }
-        .select, .input{
-          flex:1; padding:12px; border:1px solid var(--line); border-radius:12px; background:#fff; font-size:14px;
-          outline:none; transition:border-color .15s, box-shadow .15s;
-        }
-        .select:focus, .input:focus{ border-color:var(--ring); box-shadow:0 0 0 4px rgba(147,197,253,.35); }
-
-        .right{ width:220px; display:flex; flex-direction:column; align-items:center; gap:16px; }
-        .photo {width: 160px;height: 160px;border-radius: 50%;object-fit: cover;border: 4px solid #0ea5e9;box-shadow: 0 10px 24px rgba(2,6,23,.18);transition: transform .12s ease, box-shadow .2s ease;}
-        }
-        .photo:hover {transform: translateY(-3px);box-shadow: 0 14px 30px rgba(2,6,23,.26);}
-
-        /* ===== Boutons d’action ===== */
-        .btns{ display:flex; gap:14px; margin:22px 0 10px; justify-content:center; flex-wrap:wrap; }
-        .btn{
-          padding:12px 18px; border:none; border-radius:12px; font-size:15px; font-weight:900; cursor:pointer; color:#fff;
-          transition: transform .12s ease, filter .12s ease, box-shadow .12s ease; box-shadow: 0 10px 24px rgba(2,6,23,.18);
-        }
-        .btn:hover{ filter:brightness(1.06); transform: translateY(-1px); }
-        .gradSave  { background: linear-gradient(135deg,#22c55e,#16a34a); }
-        .gradReset { background: linear-gradient(135deg,#cbd5e1,#94a3b8); color:#0f172a; }
-        .gradQuit  { background: linear-gradient(135deg,#ef4444,#b91c1c); }
-
-        .pill{
-          padding:6px 10px; background:#ecfeff; border:1px solid #bae6fd; border-radius:999px;
-          font-size:12px; font-weight:800; color:#075985;
-        }
-
-        @media (max-width: 980px){
-          .formWrap { flex-direction:column; }
-          .right { width:100%; align-items:flex-start; }
-        }
       `}</style>
 
       <div className="wrap">
@@ -155,7 +96,7 @@ export default function Notes() {
           </div>
         )}
 
-        {/* SOUS-NIVEAU (sous-boutons modernisés) */}
+        {/* SOUS-NIVEAU */}
         {cycle && !sub && (
           <>
             <button className="back" onClick={() => navigate("/dashboard/notes")}>← Retour</button>
@@ -196,7 +137,13 @@ function NoteForm({ cycle, sub }) {
   const [matiereId, setMatiereId] = useState("");
   const [trimestre, setTrimestre] = useState("1er trimestre");
   const [typeNote, setTypeNote] = useState("");
+
+  // ⚠️ on stocke le champ "note" en string pour contrôler 100% du rendu
   const [note, setNote] = useState("");
+
+  // Permission
+  const [me, setMe] = useState(null);
+  const [canWrite, setCanWrite] = useState(false);
 
   const SWAL = (opts) =>
     Swal.fire({
@@ -206,13 +153,26 @@ function NoteForm({ cycle, sub }) {
       ...opts,
     });
 
+  // Session
   useEffect(() => {
     (async () => {
       try {
-        const qs = new URLSearchParams({ cycle, sub });
+        const { user } = await api("/api/auth/me");
+        setMe(user || null);
+      } catch {
+        setMe(null);
+      }
+    })();
+  }, []);
+
+  // Élèves + matières
+  useEffect(() => {
+    (async () => {
+      try {
+        const qs = new URLSearchParams({ niveau: cycle, section: sub });
         const [E, M] = await Promise.all([
-          api(`/api/notes/eleves?${qs.toString()}`),
-          api(`/api/notes/matieres?${qs.toString()}`),
+          api(`/api/absence/eleves?${qs.toString()}`),
+          api(`/api/notes/matieres?${new URLSearchParams({ cycle, sub }).toString()}`),
         ]);
         setEleves(E?.eleves || []);
         setMatieres(M?.matieres || []);
@@ -223,11 +183,23 @@ function NoteForm({ cycle, sub }) {
     setEleveId(""); setEleve(null);
     setMatiereId(""); setTrimestre("1er trimestre");
     setTypeNote(""); setNote("");
+    setCanWrite(false);
   }, [cycle, sub]);
 
   const onSelectEleve = () => {
     const e = eleves.find((x) => String(x.id) === String(eleveId));
     setEleve(e || null);
+
+    if (me && e?.niveau?.id != null && e?.section?.id != null) {
+      const ok =
+        me.role === "PROVISEUR" ||
+        (me.role === "PROFESSEUR" &&
+          Number(me.titulaireNiveauId) === Number(e.niveau.id) &&
+          Number(me.titulaireSectionId) === Number(e.section.id));
+      setCanWrite(!!ok);
+    } else {
+      setCanWrite(false);
+    }
   };
 
   const coef = useMemo(() => {
@@ -240,13 +212,89 @@ function NoteForm({ cycle, sub }) {
     if (typeof p !== "string") return DEFAULT_STUDENT;
     if (p.startsWith("/uploads/")) return p;
     if (p.startsWith("uploads/")) return "/" + p;
-    return p; // data:image/... ou http(s)://...
+    return p;
   };
 
   const resetForm = () => {
     setEleveId(""); setEleve(null);
     setMatiereId(""); setTrimestre("1er trimestre");
     setTypeNote(""); setNote("");
+    setCanWrite(false);
+  };
+
+  /* ---------- Contrôle STRICT du champ "note" ---------- */
+
+  // Bloque les touches non numériques dans un <input type="number">
+  const onKeyDownNote = (e) => {
+    // autoriser navigation/édition
+    const allowedControl = [
+      "Backspace","Delete","ArrowLeft","ArrowRight","ArrowUp","ArrowDown",
+      "Home","End","Tab","Enter","Escape"
+    ];
+    if (allowedControl.includes(e.key)) return;
+
+    // Bloquer les signes et l'exponentiel
+    if (["e","E","+","-"].includes(e.key)) {
+      e.preventDefault();
+      return;
+    }
+  };
+
+  // Empêche la saisie de caractères non numériques AVANT d'entrer dans l'input
+  const onBeforeInputNote = (e) => {
+    // e.data est null pour Backspace/Delete etc.
+    if (e.data == null) return;
+
+    // seuls chiffres + séparateurs décimaux sont autorisés
+    if (!/^[0-9.,]$/.test(e.data)) {
+      e.preventDefault();
+    }
+  };
+
+  // Nettoie le collage (paste)
+  const onPasteNote = (e) => {
+    const raw = (e.clipboardData.getData("text") || "").trim();
+    if (!raw) return;
+
+    const sanitized = raw
+      .replace(/,/g, ".")       // , -> .
+      .replace(/[^0-9.]/g, ""); // retirer tout sauf chiffres et point
+
+    // garder une seule occurrence de '.'
+    const i = sanitized.indexOf(".");
+    let clean = sanitized;
+    if (i !== -1) {
+      clean = sanitized.slice(0, i + 1) + sanitized.slice(i + 1).replace(/\./g, "");
+    }
+
+    e.preventDefault();
+    setNote(clean);
+  };
+
+  // Nettoyage continu (onChange) : conserve uniquement chiffres + 1 point
+  const onChangeNote = (e) => {
+    let v = (e.target.value || "").replace(/,/g, ".");
+    // filtre brut
+    v = v.replace(/[^0-9.]/g, "");
+    // une seule occurrence du point
+    const idx = v.indexOf(".");
+    if (idx !== -1) {
+      v = v.slice(0, idx + 1) + v.slice(idx + 1).replace(/\./g, "");
+    }
+    setNote(v);
+  };
+
+  // À la sortie du champ : clamp 0..20 et arrondi au pas de 0.25
+  const onBlurNote = () => {
+    if (note === "") return;
+    let n = Number(note);
+    if (!Number.isFinite(n)) { setNote(""); return; }
+    // clamp
+    if (n < 0) n = 0;
+    if (n > 20) n = 20;
+    // arrondi au 1/4 de point
+    n = Math.round(n * 4) / 4;
+    setNote(String(n));
   };
 
   const save = async () => {
@@ -254,8 +302,12 @@ function NoteForm({ cycle, sub }) {
     if (!eleve)     return SWAL({ icon:"error", title:"Erreur", text:"Veuillez sélectionner un élève." });
     if (!matiereId) return SWAL({ icon:"error", title:"Erreur", text:"Veuillez sélectionner une matière." });
     if (!typeNote)  return SWAL({ icon:"error", title:"Erreur", text:"Choisissez le type de note." });
-    if (Number.isNaN(n) || n < 0 || n > 20)
+    if (!Number.isFinite(n) || n < 0 || n > 20)
       return SWAL({ icon:"error", title:"Erreur", text:"La note doit être comprise entre 0 et 20." });
+    if (Math.abs(n*4 - Math.round(n*4)) > 1e-9)
+      return SWAL({ icon:"error", title:"Erreur", text:"La note doit respecter un pas de 0,25." });
+    if (!canWrite)
+      return SWAL({ icon:"warning", title:"Accès refusé", text:"Action réservée au proviseur ou au titulaire de cette classe." });
 
     try {
       await api("/api/notes", {
@@ -268,7 +320,7 @@ function NoteForm({ cycle, sub }) {
           note: n,
         },
       });
-      await SWAL({ icon:"success", title:"Succès", text:" Note enregistrée avec succès✅." });
+      await SWAL({ icon:"success", title:"Succès", text:"Note enregistrée avec succès ✅." });
       resetForm();
     } catch (e) {
       SWAL({ icon:"error", title:"Erreur", text: e.message || "Échec de l'enregistrement." });
@@ -277,6 +329,50 @@ function NoteForm({ cycle, sub }) {
 
   return (
     <>
+      <style>{`
+        .formWrap{
+          width:100%; max-width:1100px;
+          display:flex; justify-content:space-between; gap:20px; margin-top:16px;
+          background: rgba(255,255,255,0.92);
+          backdrop-filter: blur(8px);
+          border:1px solid rgba(255,255,255,.7);
+          border-radius:18px;
+          box-shadow:0 12px 30px rgba(2,6,23,.16);
+          padding:16px;
+        }
+        .col{ flex:1; display:flex; flex-direction:column; gap:14px; }
+        .row{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+        .lbl{ width:190px; font-weight:900; color:#083940; }
+        .read{ flex:1; background:#fff; border-radius:12px; min-height:20px; padding:10px 12px; border:1px solid #e5e7eb; }
+        .select, .input{
+          flex:1; padding:12px; border:1px solid #e5e7eb; border-radius:12px; background:#fff; font-size:14px;
+          outline:none; transition:border-color .15s, box-shadow .15s;
+        }
+        .select:focus, .input:focus{ border-color:#93c5fd; box-shadow:0 0 0 4px rgba(147,197,253,.35); }
+        .right{ width:220px; display:flex; flex-direction:column; align-items:center; gap:16px; }
+        .photo {width: 160px;height: 160px;border-radius: 50%;object-fit: cover;border: 4px solid #0ea5e9;box-shadow: 0 10px 24px rgba(2,6,23,.18);transition: transform .12s ease, box-shadow .2s ease;}
+        .photo:hover {transform: translateY(-3px);box-shadow: 0 14px 30px rgba(2,6,23,.26);}
+        .btns{ display:flex; gap:14px; margin:22px 0 10px; justify-content:center; flex-wrap:wrap; }
+        .btn{
+          padding:12px 18px; border:none; border-radius:12px; font-size:15px; font-weight:900; cursor:pointer; color:#fff;
+          transition: transform .12s ease, filter .12s ease, box-shadow .12s ease; box-shadow: 0 10px 24px rgba(2,6,23,.18);
+        }
+        .btn:hover{ filter:brightness(1.06); transform: translateY(-1px); }
+        .gradSave  { background: linear-gradient(135deg,#22c55e,#16a34a); }
+        .gradSave.disabled{ opacity:.6; cursor:not-allowed; }
+        .gradReset { background: linear-gradient(135deg,#cbd5e1,#94a3b8); color:#0f172a; }
+        .gradQuit  { background: linear-gradient(135deg,#ef4444,#b91c1c); }
+        .pill{
+          padding:6px 10px; background:#ecfeff; border:1px solid #bae6fd; border-radius:999px;
+          font-size:12px; font-weight:800; color:#075985;
+        }
+        .perm-hint{ color:#b91c1c; font-weight:800; }
+        @media (max-width: 980px){
+          .formWrap { flex-direction:column; }
+          .right { width:100%; align-items:flex-start; }
+        }
+      `}</style>
+
       <h2 style={{ textAlign:"center", color:"#ffffff", marginTop:8, textShadow:"0 2px 10px rgba(0,0,0,.25)" }}>
         🧮 Note {cap(cycle)} {sub}
       </h2>
@@ -352,7 +448,22 @@ function NoteForm({ cycle, sub }) {
 
           <div className="row">
             <label className="lbl">Note (sur 20) :</label>
-            <input className="input" type="number" min="0" max="20" step="0.25" value={note} onChange={(e)=>setNote(e.target.value)} placeholder="Entrez la note" />
+            <input
+              className="input"
+              type="number"
+              min="0"
+              max="20"
+              step="0.25"
+              inputMode="decimal"
+              pattern="[0-9]*[.,]?[0-9]*"
+              value={note}
+              placeholder="Entrez la note"
+              onKeyDown={onKeyDownNote}
+              onBeforeInput={onBeforeInputNote}
+              onPaste={onPasteNote}
+              onChange={onChangeNote}
+              onBlur={onBlurNote}
+            />
             <label className="lbl" style={{width:110}}>Mention :</label>
             <span className="read" style={{flex:"unset", minWidth:160}}>
               {Number.isFinite(Number(note)) ? (
@@ -373,6 +484,15 @@ function NoteForm({ cycle, sub }) {
               })()}
             </span>
           </div>
+
+          {/* Permission */}
+          {eleve && (
+            <div className="row">
+              <span className="perm-hint">
+                {canWrite ? "✅ Vous pouvez enregistrer pour cette classe." : "⛔ Réservé au proviseur ou au titulaire de cette classe."}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Colonne droite : photo */}
@@ -387,7 +507,7 @@ function NoteForm({ cycle, sub }) {
       </div>
 
       <div className="btns">
-        <button className="btn gradSave"  onClick={save} style={{ background: 'linear-gradient(135deg,#22c55e 0%, #16a34a 50%, #14532d 100%)' }}>💾 Enregistrer</button>
+        <button className={`btn gradSave ${canWrite ? "" : "disabled"}`} disabled={!canWrite} onClick={save} style={{ background: 'linear-gradient(135deg,#22c55e 0%, #16a34a 50%, #14532d 100%)' }}>💾 Enregistrer</button>
         <button className="btn gradReset" onClick={resetForm}>🔄 Actualiser</button>
         <button className="btn gradQuit" onClick={()=>navigate("/dashboard") }>🏠 Quitter</button>
       </div>

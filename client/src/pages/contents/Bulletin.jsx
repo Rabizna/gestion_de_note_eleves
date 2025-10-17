@@ -676,7 +676,7 @@ function BulletinTable({ matieres, studentNotes, classStats, effectif, eleveId, 
                 <div><span className="decision-box">{computed.decision}</span></div>
               ) : (
                 <div>
-                  <div>Autorisé(e) à tripler : OUI - NON</div>
+                  <div>Autorisé(e) à redoubler : OUI - NON</div>
                   <div>Remise à sa famille</div>
                 </div>
               )}
